@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PostCard from "@/components/PostCard";
-import { Plus, BookOpen, MessageSquare, Code, Upload, LogOut, Search } from "lucide-react";
+import { Plus, BookOpen, MessageSquare, Code, Upload, LogOut, Search, Image, FileText } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Post {
@@ -19,6 +19,9 @@ interface Post {
   content: string;
   post_type: 'text' | 'code' | 'image' | 'pdf';
   code_language: string | null;
+  file_url: string | null;
+  file_name: string | null;
+  file_size: number | null;
   created_at: string;
   profiles: {
     full_name: string | null;
@@ -40,6 +43,7 @@ const StudentDashboard = () => {
   const [postType, setPostType] = useState<'text' | 'code' | 'image' | 'pdf'>('text');
   const [codeLanguage, setCodeLanguage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fetchPosts = async () => {
     try {
@@ -98,13 +102,42 @@ const StudentDashboard = () => {
     setIsSubmitting(true);
 
     try {
+      let fileUrl = null;
+      let fileName = null;
+      let fileSize = null;
+
+      // Handle file upload for image and PDF posts
+      if ((postType === 'image' || postType === 'pdf') && selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const filePath = `${profile?.user_id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('study-files')
+          .upload(filePath, selectedFile);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('study-files')
+          .getPublicUrl(filePath);
+        
+        fileUrl = publicUrl;
+        fileName = selectedFile.name;
+        fileSize = selectedFile.size;
+      }
+
       const { error } = await supabase
         .from('posts')
         .insert({
           title: title || null,
-          content,
+          content: (postType === 'image' || postType === 'pdf') ? (content || fileName || 'File upload') : content,
           post_type: postType,
           code_language: postType === 'code' ? codeLanguage || null : null,
+          file_url: fileUrl,
+          file_name: fileName,
+          file_size: fileSize,
           user_id: profile?.user_id || '',
         });
 
@@ -123,11 +156,17 @@ const StudentDashboard = () => {
         setContent("");
         setPostType('text');
         setCodeLanguage("");
+        setSelectedFile(null);
         setIsCreateOpen(false);
         fetchPosts(); // Refresh posts
       }
     } catch (error) {
       console.error('Error creating post:', error);
+      toast({
+        title: "Error creating post",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -193,6 +232,18 @@ const StudentDashboard = () => {
                             Code Snippet
                           </div>
                         </SelectItem>
+                        <SelectItem value="image">
+                          <div className="flex items-center">
+                            <Image className="h-4 w-4 mr-2" />
+                            Image Upload
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="pdf">
+                          <div className="flex items-center">
+                            <FileText className="h-4 w-4 mr-2" />
+                            PDF Document
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -225,8 +276,30 @@ const StudentDashboard = () => {
                     </div>
                   )}
 
+                  {(postType === 'image' || postType === 'pdf') && (
+                    <div className="space-y-2">
+                      <Label htmlFor="file">
+                        {postType === 'image' ? 'Select Image' : 'Select PDF Document'}
+                      </Label>
+                      <Input
+                        id="file"
+                        type="file"
+                        accept={postType === 'image' ? 'image/*' : '.pdf'}
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                        required
+                      />
+                      {selectedFile && (
+                        <p className="text-sm text-muted-foreground">
+                          Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="space-y-2">
-                    <Label htmlFor="content">Content</Label>
+                    <Label htmlFor="content">
+                      {(postType === 'image' || postType === 'pdf') ? 'Description (Optional)' : 'Content'}
+                    </Label>
                     <Textarea
                       id="content"
                       value={content}
@@ -234,10 +307,14 @@ const StudentDashboard = () => {
                       placeholder={
                         postType === 'code' 
                           ? "Paste your code here..." 
+                          : postType === 'image'
+                          ? "Add a description for your image..."
+                          : postType === 'pdf' 
+                          ? "Add a description for your document..."
                           : "Share your thoughts, questions, or study notes..."
                       }
                       rows={postType === 'code' ? 10 : 6}
-                      required
+                      required={postType === 'text' || postType === 'code'}
                     />
                   </div>
 

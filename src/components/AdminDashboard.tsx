@@ -37,6 +37,9 @@ interface Post {
   content: string;
   post_type: 'text' | 'code' | 'image' | 'pdf';
   code_language: string | null;
+  file_url: string | null;
+  file_name: string | null;
+  file_size: number | null;
   created_at: string;
   profiles: {
     full_name: string | null;
