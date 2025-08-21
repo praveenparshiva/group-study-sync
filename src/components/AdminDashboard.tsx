@@ -41,7 +41,7 @@ interface Post {
   profiles: {
     full_name: string | null;
     avatar_url: string | null;
-  };
+  } | null;
 }
 
 interface UserProfile {
@@ -68,21 +68,39 @@ const AdminDashboard = () => {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select(`
-          *,
-          profiles!posts_user_id_fkey (
-            full_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching posts:', error);
+      if (postsError) {
+        console.error('Error fetching posts:', postsError);
+        return;
+      }
+
+      if (postsData && postsData.length > 0) {
+        // Get unique user IDs from posts
+        const userIds = [...new Set(postsData.map(post => post.user_id))];
+        
+        // Fetch profiles for those users
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .in('user_id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        }
+
+        // Combine posts with profiles
+        const postsWithProfiles = postsData.map(post => ({
+          ...post,
+          profiles: profilesData?.find(profile => profile.user_id === post.user_id) || null
+        })) as Post[];
+
+        setPosts(postsWithProfiles);
       } else {
-        setPosts(data || []);
+        setPosts([]);
       }
     } catch (error) {
       console.error('Error in fetchPosts:', error);
