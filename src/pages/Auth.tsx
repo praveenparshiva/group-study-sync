@@ -13,7 +13,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { user, profile, signIn, signUp, signInWithGoogle } = useAuth();
+  const { user, profile, signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,11 +36,6 @@ const Auth = () => {
     setLoading(false);
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    await signInWithGoogle();
-    setLoading(false);
-  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -62,26 +57,6 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Google Sign In */}
-            <Button
-              variant="outline"
-              className="w-full mb-6"
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Continue with Google
-            </Button>
-
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
-
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>

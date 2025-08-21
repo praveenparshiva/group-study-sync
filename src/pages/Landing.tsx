@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const Landing = () => {
-  const { user, profile, signInWithGoogle } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -92,10 +92,10 @@ const Landing = () => {
             <Button 
               size="lg" 
               className="text-lg px-8 py-6 hover:bg-primary-hover transition-colors"
-              onClick={signInWithGoogle}
+              onClick={() => navigate("/auth")}
             >
               <Users className="h-5 w-5 mr-2" />
-              Join with Google
+              Get Started Now
             </Button>
             <Button 
               size="lg" 
@@ -142,7 +142,7 @@ const Landing = () => {
           <Button 
             size="lg" 
             className="text-lg px-8 py-6 hover:bg-primary-hover transition-colors"
-            onClick={signInWithGoogle}
+            onClick={() => navigate("/auth")}
           >
             Get Started Now
           </Button>
