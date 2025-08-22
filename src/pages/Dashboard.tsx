@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import StudentDashboard from "@/components/StudentDashboard";
 import AdminDashboard from "@/components/AdminDashboard";
 import { Loader2 } from "lucide-react";
 
@@ -10,7 +9,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && (!user || !profile)) {
+    // Only allow admin users to access the dashboard
+    if (!loading && (!user || !profile || profile.role !== 'admin')) {
       navigate("/auth");
     }
   }, [user, profile, loading, navigate]);
@@ -20,13 +20,13 @@ const Dashboard = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span className="text-muted-foreground">Loading your dashboard...</span>
+          <span className="text-muted-foreground">Loading admin dashboard...</span>
         </div>
       </div>
     );
   }
 
-  if (!user || !profile) {
+  if (!user || !profile || profile.role !== 'admin') {
     return null;
   }
 
@@ -44,7 +44,8 @@ const Dashboard = () => {
     );
   }
 
-  return profile.role === 'admin' ? <AdminDashboard /> : <StudentDashboard />;
+  // Only show admin dashboard
+  return <AdminDashboard />;
 };
 
 export default Dashboard;
