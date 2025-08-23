@@ -1,73 +1,68 @@
-# Welcome to your Lovable project
+✨ Features
+🔓 Public Access for Students
 
-## Project info
+No login required → anyone can browse and contribute instantly.
 
-**URL**: https://lovable.dev/projects/3b82176f-2d00-4bc2-8dc7-5b0e94985ee7
+Anonymous posting with optional name field for identity.
 
-## How can I edit this code?
+Supports all post types:
 
-There are several ways of editing your application.
+📝 Text notes
 
-**Use Lovable**
+💻 Code snippets
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3b82176f-2d00-4bc2-8dc7-5b0e94985ee7) and start prompting.
+🖼️ Images
 
-Changes made via Lovable will be committed automatically to this repo.
+📄 PDFs and study files
 
-**Use your preferred IDE**
+🛡️ Admin-Only Authentication
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Admin button (with shield icon) for secure access.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+/auth page reserved only for admins.
 
-Follow these steps:
+/dashboard route fully protected → only admins can manage posts and content.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Unauthorized users are automatically blocked from admin routes.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+🗄️ Database & Policies
 
-# Step 3: Install the necessary dependencies.
-npm i
+Public users: read + create posts/files without login.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Admins: full control, including delete and management operations.
 
-**Edit a file directly in GitHub**
+Supabase Row Level Security (RLS) ensures correct access separation.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+🎨 Modern UI/UX
 
-**Use GitHub Codespaces**
+Light/Dark mode toggle with sun/moon icons.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Theme choice persists across reloads (saved in localStorage).
 
-## What technologies are used for this project?
+Floating scroll buttons (↑ ↓) for smooth navigation to top/bottom.
 
-This project is built with:
+Responsive design → works seamlessly on desktop and mobile.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Accessible: ARIA labels, keyboard support, and smooth transitions.
 
-## How can I deploy this project?
+🛠️ Tech Stack
 
-Simply open [Lovable](https://lovable.dev/projects/3b82176f-2d00-4bc2-8dc7-5b0e94985ee7) and click on Share -> Publish.
+Frontend: React + Vite + TailwindCSS
 
-## Can I connect a custom domain to my Lovable project?
+Backend/DB: Supabase (Postgres + Auth + Storage)
 
-Yes, you can!
+Hosting: Netlify
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+🤖 Built with AI Assistance
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project was created while vibe coding — giving prompts to an AI (ChatGPT) to:
+
+Generate components and routes
+
+Debug Supabase errors (RLS, foreign keys, etc.)
+
+Add features like dark mode, anonymous posting, and scroll buttons
+
+Polish UI/UX and accessibility
+
+I guided the process with my own prompts and decisions, while the AI handled much of the code scaffolding.
