@@ -296,7 +296,7 @@ const PublicStudentFeed = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <BookOpen className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold text-primary">Notes</h1>
+              <h1 className="text-2xl font-bold text-primary">Chart Room</h1>
             </div>
             <div className="hidden md:block text-sm text-muted-foreground">
               <span>Community Student Hub</span>
@@ -466,7 +466,7 @@ const PublicStudentFeed = () => {
               className="flex items-center"
             >
               <Shield className="h-4 w-4 mr-2" />
-              Admin
+              Moderator
             </Button>
           </div>
         </div>
