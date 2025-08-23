@@ -3,12 +3,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PostCard from "@/components/PostCard";
-import { Plus, BookOpen, MessageSquare, Code, Search, Image, FileText, Shield } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Plus,
+  BookOpen,
+  MessageSquare,
+  Code,
+  Search,
+  Image,
+  FileText,
+  Shield,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import FloatingScrollButtons from "@/components/FloatingScrollButtons";
@@ -18,7 +39,7 @@ interface Post {
   user_id: string | null;
   title: string | null;
   content: string;
-  post_type: 'text' | 'code' | 'image' | 'pdf';
+  post_type: "text" | "code" | "image" | "pdf";
   code_language: string | null;
   file_url: string | null;
   file_name: string | null;
@@ -37,11 +58,13 @@ const PublicStudentFeed = () => {
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Form state
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [postType, setPostType] = useState<'text' | 'code' | 'image' | 'pdf'>('text');
+  const [postType, setPostType] = useState<"text" | "code" | "image" | "pdf">(
+    "text"
+  );
   const [codeLanguage, setCodeLanguage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -50,12 +73,12 @@ const PublicStudentFeed = () => {
   const fetchPosts = async () => {
     try {
       const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("posts")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (postsError) {
-        console.error('Error fetching posts:', postsError);
+        console.error("Error fetching posts:", postsError);
         toast({
           title: "Error loading posts",
           description: postsError.message,
@@ -66,29 +89,34 @@ const PublicStudentFeed = () => {
 
       if (postsData && postsData.length > 0) {
         // Get unique user IDs from posts (excluding null values)
-        const userIds = [...new Set(postsData.map(post => post.user_id).filter(Boolean))];
-        
+        const userIds = [
+          ...new Set(postsData.map((post) => post.user_id).filter(Boolean)),
+        ];
+
         let profilesData = null;
         if (userIds.length > 0) {
           // Fetch profiles for those users
           const { data: profiles, error: profilesError } = await supabase
-            .from('profiles')
-            .select('user_id, full_name, avatar_url')
-            .in('user_id', userIds);
+            .from("profiles")
+            .select("user_id, full_name, avatar_url")
+            .in("user_id", userIds);
 
           if (profilesError) {
-            console.error('Error fetching profiles:', profilesError);
+            console.error("Error fetching profiles:", profilesError);
           } else {
             profilesData = profiles;
           }
         }
 
         // Combine posts with profiles
-        const postsWithProfiles = postsData.map(post => ({
+        const postsWithProfiles = postsData.map((post) => ({
           ...post,
-          profiles: post.user_id && profilesData 
-            ? profilesData.find(profile => profile.user_id === post.user_id) || null 
-            : null
+          profiles:
+            post.user_id && profilesData
+              ? profilesData.find(
+                  (profile) => profile.user_id === post.user_id
+                ) || null
+              : null,
         })) as Post[];
 
         setPosts(postsWithProfiles);
@@ -96,7 +124,7 @@ const PublicStudentFeed = () => {
         setPosts([]);
       }
     } catch (error) {
-      console.error('Error in fetchPosts:', error);
+      console.error("Error in fetchPosts:", error);
     } finally {
       setLoading(false);
     }
@@ -116,40 +144,41 @@ const PublicStudentFeed = () => {
       let fileSize = null;
 
       // Handle file upload for image and PDF posts
-      if ((postType === 'image' || postType === 'pdf') && selectedFile) {
-        const fileExt = selectedFile.name.split('.').pop();
+      if ((postType === "image" || postType === "pdf") && selectedFile) {
+        const fileExt = selectedFile.name.split(".").pop();
         const filePath = `anonymous/${Date.now()}.${fileExt}`;
-        
+
         const { error: uploadError } = await supabase.storage
-          .from('study-files')
+          .from("study-files")
           .upload(filePath, selectedFile);
 
         if (uploadError) {
           throw uploadError;
         }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('study-files')
-          .getPublicUrl(filePath);
-        
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("study-files").getPublicUrl(filePath);
+
         fileUrl = publicUrl;
         fileName = selectedFile.name;
         fileSize = selectedFile.size;
       }
 
       // Create anonymous post with null user_id
-      const { error } = await supabase
-        .from('posts')
-        .insert({
-          title: title || null,
-          content: (postType === 'image' || postType === 'pdf') ? (content || fileName || 'File upload') : content,
-          post_type: postType,
-          code_language: postType === 'code' ? codeLanguage || null : null,
-          file_url: fileUrl,
-          file_name: fileName,
-          file_size: fileSize,
-          user_id: null, // Anonymous post
-        });
+      const { error } = await supabase.from("posts").insert({
+        title: title || null,
+        content:
+          postType === "image" || postType === "pdf"
+            ? content || fileName || "File upload"
+            : content,
+        post_type: postType,
+        code_language: postType === "code" ? codeLanguage || null : null,
+        file_url: fileUrl,
+        file_name: fileName,
+        file_size: fileSize,
+        user_id: null, // Anonymous post
+      });
 
       if (error) {
         toast({
@@ -164,17 +193,20 @@ const PublicStudentFeed = () => {
         });
         setTitle("");
         setContent("");
-        setPostType('text');
+        setPostType("text");
         setCodeLanguage("");
         setSelectedFile(null);
         setIsCreateOpen(false);
         fetchPosts(); // Refresh posts
       }
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error("Error creating post:", error);
       toast({
         title: "Error creating post",
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
@@ -182,15 +214,29 @@ const PublicStudentFeed = () => {
     }
   };
 
-  const filteredPosts = posts.filter(post =>
-    post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    post.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPosts = posts.filter(
+    (post) =>
+      post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      post.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const codeLanguages = [
-    'javascript', 'typescript', 'python', 'java', 'cpp', 'c', 'csharp',
-    'html', 'css', 'sql', 'bash', 'json', 'xml', 'yaml', 'markdown'
+    "javascript",
+    "typescript",
+    "python",
+    "java",
+    "cpp",
+    "c",
+    "csharp",
+    "html",
+    "css",
+    "sql",
+    "bash",
+    "json",
+    "xml",
+    "yaml",
+    "markdown",
   ];
 
   return (
@@ -221,10 +267,12 @@ const PublicStudentFeed = () => {
                   <DialogTitle>Create New Post</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleCreatePost} className="space-y-4">
-
                   <div className="space-y-2">
                     <Label htmlFor="post-type">Post Type</Label>
-                    <Select value={postType} onValueChange={(value: any) => setPostType(value)}>
+                    <Select
+                      value={postType}
+                      onValueChange={(value: any) => setPostType(value)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -267,10 +315,13 @@ const PublicStudentFeed = () => {
                     />
                   </div>
 
-                  {postType === 'code' && (
+                  {postType === "code" && (
                     <div className="space-y-2">
                       <Label htmlFor="language">Programming Language</Label>
-                      <Select value={codeLanguage} onValueChange={setCodeLanguage}>
+                      <Select
+                        value={codeLanguage}
+                        onValueChange={setCodeLanguage}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select language..." />
                         </SelectTrigger>
@@ -285,21 +336,26 @@ const PublicStudentFeed = () => {
                     </div>
                   )}
 
-                  {(postType === 'image' || postType === 'pdf') && (
+                  {(postType === "image" || postType === "pdf") && (
                     <div className="space-y-2">
                       <Label htmlFor="file">
-                        {postType === 'image' ? 'Select Image' : 'Select PDF Document'}
+                        {postType === "image"
+                          ? "Select Image"
+                          : "Select PDF Document"}
                       </Label>
                       <Input
                         id="file"
                         type="file"
-                        accept={postType === 'image' ? 'image/*' : '.pdf'}
-                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                        accept={postType === "image" ? "image/*" : ".pdf"}
+                        onChange={(e) =>
+                          setSelectedFile(e.target.files?.[0] || null)
+                        }
                         required
                       />
                       {selectedFile && (
                         <p className="text-sm text-muted-foreground">
-                          Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                          Selected: {selectedFile.name} (
+                          {(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                         </p>
                       )}
                     </div>
@@ -307,21 +363,25 @@ const PublicStudentFeed = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="content">
-                      {postType === 'code' ? 'Code' : postType === 'image' || postType === 'pdf' ? 'Description (Optional)' : 'Content'}
+                      {postType === "code"
+                        ? "Code"
+                        : postType === "image" || postType === "pdf"
+                        ? "Description (Optional)"
+                        : "Content"}
                     </Label>
                     <Textarea
                       id="content"
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
                       placeholder={
-                        postType === 'code' 
-                          ? "Paste your code here..." 
-                          : postType === 'image' || postType === 'pdf'
+                        postType === "code"
+                          ? "Paste your code here..."
+                          : postType === "image" || postType === "pdf"
                           ? "Add a description for your file..."
                           : "What's on your mind?"
                       }
-                      rows={postType === 'code' ? 10 : 4}
-                      required={postType === 'text' || postType === 'code'}
+                      rows={postType === "code" ? 10 : 4}
+                      required={postType === "text" || postType === "code"}
                     />
                   </div>
 
@@ -344,8 +404,8 @@ const PublicStudentFeed = () => {
                 </form>
               </DialogContent>
             </Dialog>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => navigate("/auth")}
               className="flex items-center"
             >
@@ -361,13 +421,18 @@ const PublicStudentFeed = () => {
         {/* Search */}
         <div className="mb-8">
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search posts..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+            {/* Gradient animated border wrapper */}
+            <div className="p-[2px] rounded-lg animate-gradient-border bg-[linear-gradient(315deg,#22dfe6_5%,#0022a0_95%)] bg-[length:200%_200%]">
+              <div className="relative bg-background rounded-lg">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search posts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 rounded-lg border-0 focus:ring-0 focus:outline-none"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -384,10 +449,9 @@ const PublicStudentFeed = () => {
                 {searchTerm ? "No posts found" : "No posts yet"}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm 
-                  ? "Try a different search term" 
-                  : "Be the first to share something with the study community!"
-                }
+                {searchTerm
+                  ? "Try a different search term"
+                  : "Be the first to share something with the study community!"}
               </p>
               {!searchTerm && (
                 <Button onClick={() => setIsCreateOpen(true)}>
@@ -403,7 +467,7 @@ const PublicStudentFeed = () => {
           )}
         </div>
       </main>
-      
+
       <FloatingScrollButtons />
     </div>
   );
