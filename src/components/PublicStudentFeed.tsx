@@ -11,6 +11,7 @@ import { Plus, BookOpen, MessageSquare, Code, Search, Image, FileText, Shield } 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import FloatingScrollButtons from "@/components/FloatingScrollButtons";
 
 interface Post {
   id: string;
@@ -402,6 +403,8 @@ const PublicStudentFeed = () => {
           )}
         </div>
       </main>
+      
+      <FloatingScrollButtons />
     </div>
   );
 };
