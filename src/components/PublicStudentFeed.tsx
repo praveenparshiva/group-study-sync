@@ -222,21 +222,70 @@ const PublicStudentFeed = () => {
   );
 
   const codeLanguages = [
-    "javascript",
-    "typescript",
-    "python",
-    "java",
-    "cpp",
-    "c",
-    "csharp",
-    "html",
-    "css",
-    "sql",
-    "bash",
-    "json",
-    "xml",
-    "yaml",
-    "markdown",
+    {
+      name: "javascript",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg",
+    },
+    {
+      name: "typescript",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg",
+    },
+    {
+      name: "python",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
+    },
+    {
+      name: "java",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg",
+    },
+    {
+      name: "cpp",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg",
+    },
+    {
+      name: "c",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg",
+    },
+    {
+      name: "r",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/r/r-original.svg",
+    },
+    {
+      name: "csharp",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg",
+    },
+    {
+      name: "html",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg",
+    },
+    {
+      name: "css",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg",
+    },
+    {
+      name: "sql",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg",
+    },
+    {
+      name: "bash",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg",
+    },
+    {
+      name: "json",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/json/json-original.svg",
+    }, // fallback unofficial
+    {
+      name: "xml",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/xmpp/xmpp-original.svg",
+    }, // closest match
+    {
+      name: "yaml",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/yaml/yaml-original.svg",
+    }, // fallback unofficial
+    {
+      name: "markdown",
+      icon: "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/markdown/markdown-original.svg",
+    },
   ];
 
   return (
@@ -327,8 +376,15 @@ const PublicStudentFeed = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {codeLanguages.map((lang) => (
-                            <SelectItem key={lang} value={lang}>
-                              {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                            <SelectItem key={lang.name} value={lang.name}>
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={lang.icon}
+                                  alt={lang.name}
+                                  className="h-5 w-5"
+                                />
+                                <span className="capitalize">{lang.name}</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -421,18 +477,13 @@ const PublicStudentFeed = () => {
         {/* Search */}
         <div className="mb-8">
           <div className="relative max-w-md">
-            {/* Gradient animated border wrapper */}
-            <div className="p-[2px] rounded-lg animate-gradient-border bg-[linear-gradient(315deg,#22dfe6_5%,#0022a0_95%)] bg-[length:200%_200%]">
-              <div className="relative bg-background rounded-lg">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search posts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 rounded-lg border-0 focus:ring-0 focus:outline-none"
-                />
-              </div>
-            </div>
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search posts..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </div>
 
