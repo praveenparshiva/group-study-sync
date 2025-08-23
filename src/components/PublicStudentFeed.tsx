@@ -10,10 +10,11 @@ import PostCard from "@/components/PostCard";
 import { Plus, BookOpen, MessageSquare, Code, Search, Image, FileText, Shield } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface Post {
   id: string;
-  user_id: string;
+  user_id: string | null;
   title: string | null;
   content: string;
   post_type: 'text' | 'code' | 'image' | 'pdf';
@@ -63,23 +64,30 @@ const PublicStudentFeed = () => {
       }
 
       if (postsData && postsData.length > 0) {
-        // Get unique user IDs from posts
-        const userIds = [...new Set(postsData.map(post => post.user_id))];
+        // Get unique user IDs from posts (excluding null values)
+        const userIds = [...new Set(postsData.map(post => post.user_id).filter(Boolean))];
         
-        // Fetch profiles for those users
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url')
-          .in('user_id', userIds);
+        let profilesData = null;
+        if (userIds.length > 0) {
+          // Fetch profiles for those users
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url')
+            .in('user_id', userIds);
 
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
+          if (profilesError) {
+            console.error('Error fetching profiles:', profilesError);
+          } else {
+            profilesData = profiles;
+          }
         }
 
         // Combine posts with profiles
         const postsWithProfiles = postsData.map(post => ({
           ...post,
-          profiles: profilesData?.find(profile => profile.user_id === post.user_id) || null
+          profiles: post.user_id && profilesData 
+            ? profilesData.find(profile => profile.user_id === post.user_id) || null 
+            : null
         })) as Post[];
 
         setPosts(postsWithProfiles);
@@ -102,9 +110,6 @@ const PublicStudentFeed = () => {
     setIsSubmitting(true);
 
     try {
-      // Generate a random user ID for anonymous posts
-      const anonymousUserId = crypto.randomUUID();
-      
       let fileUrl = null;
       let fileName = null;
       let fileSize = null;
@@ -131,17 +136,7 @@ const PublicStudentFeed = () => {
         fileSize = selectedFile.size;
       }
 
-      // Create profile for anonymous user if name is provided
-      if (authorName.trim()) {
-        await supabase
-          .from('profiles')
-          .upsert({
-            user_id: anonymousUserId,
-            full_name: authorName.trim(),
-            email: `anonymous_${anonymousUserId}@studysync.local`
-          });
-      }
-
+      // Create anonymous post with null user_id
       const { error } = await supabase
         .from('posts')
         .insert({
@@ -152,7 +147,7 @@ const PublicStudentFeed = () => {
           file_url: fileUrl,
           file_name: fileName,
           file_size: fileSize,
-          user_id: anonymousUserId,
+          user_id: null, // Anonymous post
         });
 
       if (error) {
@@ -171,7 +166,6 @@ const PublicStudentFeed = () => {
         setPostType('text');
         setCodeLanguage("");
         setSelectedFile(null);
-        setAuthorName("");
         setIsCreateOpen(false);
         fetchPosts(); // Refresh posts
       }
@@ -213,6 +207,7 @@ const PublicStudentFeed = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <ThemeToggle />
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button className="hover:bg-primary-hover transition-colors">
@@ -225,15 +220,6 @@ const PublicStudentFeed = () => {
                   <DialogTitle>Create New Post</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleCreatePost} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="author-name">Your Name (Optional)</Label>
-                    <Input
-                      id="author-name"
-                      value={authorName}
-                      onChange={(e) => setAuthorName(e.target.value)}
-                      placeholder="Enter your name..."
-                    />
-                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="post-type">Post Type</Label>

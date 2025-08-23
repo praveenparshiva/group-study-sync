@@ -7,7 +7,7 @@ import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface Post {
   id: string;
-  user_id: string;
+  user_id: string | null;
   title: string | null;
   content: string;
   post_type: 'text' | 'code' | 'image' | 'pdf';

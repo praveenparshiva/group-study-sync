@@ -27,7 +27,7 @@ export type Database = {
           post_type: string
           title: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           code_language?: string | null
@@ -41,7 +41,7 @@ export type Database = {
           post_type?: string
           title?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           code_language?: string | null
@@ -55,7 +55,7 @@ export type Database = {
           post_type?: string
           title?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

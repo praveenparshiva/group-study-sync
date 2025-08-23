@@ -32,7 +32,7 @@ import {
 
 interface Post {
   id: string;
-  user_id: string;
+  user_id: string | null;
   title: string | null;
   content: string;
   post_type: 'text' | 'code' | 'image' | 'pdf';
@@ -82,23 +82,30 @@ const AdminDashboard = () => {
       }
 
       if (postsData && postsData.length > 0) {
-        // Get unique user IDs from posts
-        const userIds = [...new Set(postsData.map(post => post.user_id))];
+        // Get unique user IDs from posts (excluding null values)
+        const userIds = [...new Set(postsData.map(post => post.user_id).filter(Boolean))];
         
-        // Fetch profiles for those users
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url')
-          .in('user_id', userIds);
+        let profilesData = null;
+        if (userIds.length > 0) {
+          // Fetch profiles for those users
+          const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url')
+            .in('user_id', userIds);
 
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
+          if (profilesError) {
+            console.error('Error fetching profiles:', profilesError);
+          } else {
+            profilesData = profiles;
+          }
         }
 
         // Combine posts with profiles
         const postsWithProfiles = postsData.map(post => ({
           ...post,
-          profiles: profilesData?.find(profile => profile.user_id === post.user_id) || null
+          profiles: post.user_id && profilesData 
+            ? profilesData.find(profile => profile.user_id === post.user_id) || null 
+            : null
         })) as Post[];
 
         setPosts(postsWithProfiles);
@@ -152,7 +159,7 @@ const AdminDashboard = () => {
     try {
       const { error } = await supabase
         .from('posts')
-        .update({ is_deleted: true })
+        .delete()
         .eq('id', postId);
 
       if (error) {
@@ -164,7 +171,7 @@ const AdminDashboard = () => {
       } else {
         toast({
           title: "Post deleted",
-          description: "The post has been removed from the platform.",
+          description: "The post has been permanently removed.",
         });
         fetchPosts();
       }
