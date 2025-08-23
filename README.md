@@ -3,7 +3,7 @@
 A collaborative platform where students can share notes, code snippets, images, and study materials.
 Built to be public-first → anyone can contribute without needing to log in.
 
-🔗 Live Demo: labshub.netlify.app
+🔗 Live Demo: [labshub.netlify.app](https://labshub.netlify.app/)
 
 ------------------------------------------------------------------------
 
