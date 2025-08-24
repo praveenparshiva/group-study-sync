@@ -35,6 +35,7 @@ import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import FloatingScrollButtons from "@/components/FloatingScrollButtons";
 import { GalaxyViewer } from "@/components/GalaxyViewer";
+import { SolarSystemViewer } from "@/components/SolarSystemViewer";
 
 interface Post {
   id: string;
@@ -72,6 +73,9 @@ const PublicStudentFeed = () => {
   
   // Galaxy viewer state
   const [galaxyViewerOpen, setGalaxyViewerOpen] = useState(false);
+  
+  // Solar system viewer state  
+  const [solarSystemViewerOpen, setSolarSystemViewerOpen] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -315,6 +319,15 @@ const PublicStudentFeed = () => {
               <Orbit className="h-4 w-4 mr-2" />
               MilkyWay-Galaxy
             </Button>
+            <Button
+              onClick={() => setSolarSystemViewerOpen(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center"
+            >
+              <Orbit className="h-4 w-4 mr-2" />
+              Solar System
+            </Button>
             <ThemeToggle />
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
@@ -538,6 +551,7 @@ const PublicStudentFeed = () => {
 
       <FloatingScrollButtons />
       <GalaxyViewer open={galaxyViewerOpen} onOpenChange={setGalaxyViewerOpen} />
+      <SolarSystemViewer open={solarSystemViewerOpen} onOpenChange={setSolarSystemViewerOpen} />
     </div>
   );
 };
