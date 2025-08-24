@@ -64,13 +64,13 @@ const PublicStudentFeed = () => {
   // Form state
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [postType, setPostType] = useState<"text" | "code" | "image" | "pdf">(
-    "text"
-  );
+  const [postType, setPostType] = useState<"text" | "code" | "image" | "pdf">("text");
   const [codeLanguage, setCodeLanguage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [authorName, setAuthorName] = useState("");
+  
+  // Galaxy viewer state
   const [galaxyViewerOpen, setGalaxyViewerOpen] = useState(false);
 
   const fetchPosts = async () => {
