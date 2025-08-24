@@ -206,7 +206,7 @@ export function MilkyWayGalaxy({ rotationSpeed = 1, autoRotate = true }: GalaxyP
   
   useFrame(() => {
     if (galaxyRef.current && autoRotate) {
-      galaxyRef.current.rotation.y += rotationSpeed * 0.01;
+      galaxyRef.current.rotation.y += rotationSpeed * 0.002;
     }
   });
   
