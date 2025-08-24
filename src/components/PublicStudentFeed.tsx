@@ -22,6 +22,7 @@ import {
   Image,
   FileText,
   Shield,
+  Orbit,
 } from "lucide-react";
 import {
   Dialog,
@@ -33,6 +34,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import FloatingScrollButtons from "@/components/FloatingScrollButtons";
+import { GalaxyViewer } from "@/components/GalaxyViewer";
 
 interface Post {
   id: string;
@@ -69,6 +71,7 @@ const PublicStudentFeed = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [authorName, setAuthorName] = useState("");
+  const [galaxyViewerOpen, setGalaxyViewerOpen] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -303,6 +306,15 @@ const PublicStudentFeed = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <Button
+              onClick={() => setGalaxyViewerOpen(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center"
+            >
+              <Orbit className="h-4 w-4 mr-2" />
+              MilkyWay-Galaxy
+            </Button>
             <ThemeToggle />
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
@@ -525,6 +537,7 @@ const PublicStudentFeed = () => {
       </main>
 
       <FloatingScrollButtons />
+      <GalaxyViewer open={galaxyViewerOpen} onOpenChange={setGalaxyViewerOpen} />
     </div>
   );
 };
