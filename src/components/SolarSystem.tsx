@@ -7,7 +7,7 @@ interface SolarSystemProps {
   autoRotate?: boolean;
 }
 
-// Individual Planet Component
+// Individual Planet Component (Particle-based)
 function Planet({ 
   position, 
   size, 
@@ -19,19 +19,61 @@ function Planet({
   color: [number, number, number]; 
   name: string; 
 }) {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const particlesRef = useRef<THREE.Points>(null);
+  
+  const planetGeometry = useMemo(() => {
+    const particleCount = Math.floor(size * 100 + 50); // More particles for larger planets
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const sizes = new Float32Array(particleCount);
+    
+    const radius = size * 0.5;
+    
+    for (let i = 0; i < particleCount; i++) {
+      const i3 = i * 3;
+      
+      // Create spherical distribution using spherical coordinates
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = radius * Math.pow(Math.random(), 0.33); // Cubic root for volume distribution
+      
+      positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i3 + 2] = r * Math.cos(phi);
+      
+      // Add some color variation
+      const colorVariation = 0.8 + Math.random() * 0.4;
+      colors[i3] = color[0] * colorVariation;
+      colors[i3 + 1] = color[1] * colorVariation;
+      colors[i3 + 2] = color[2] * colorVariation;
+      
+      sizes[i] = 0.05 + Math.random() * 0.1;
+    }
+    
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    
+    return geometry;
+  }, [size, color]);
   
   useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.01;
+    if (particlesRef.current) {
+      particlesRef.current.rotation.y += 0.01;
     }
   });
   
+  const particleMaterial = new THREE.PointsMaterial({
+    size: 0.1,
+    sizeAttenuation: true,
+    vertexColors: true,
+    transparent: true,
+    alphaTest: 0.001,
+  });
+  
   return (
-    <mesh ref={meshRef} position={position}>
-      <sphereGeometry args={[size * 0.5, 16, 16]} />
-      <meshPhongMaterial color={new THREE.Color(color[0], color[1], color[2])} />
-    </mesh>
+    <points ref={particlesRef} position={position} geometry={planetGeometry} material={particleMaterial} />
   );
 }
 
@@ -212,14 +254,6 @@ export function SolarSystem({ rotationSpeed = 1, autoRotate = true }: SolarSyste
       
       {/* Background stars */}
       <points geometry={starsGeometry} material={particleMaterial.clone()} />
-      
-      {/* Orbital paths (visual guides) */}
-      {planetData.map((planet) => (
-        <mesh key={`orbit-${planet.name}`} rotation={[Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[planet.distance - 0.1, planet.distance + 0.1, 64]} />
-          <meshBasicMaterial color="#333333" transparent={true} opacity={0.1} />
-        </mesh>
-      ))}
     </group>
   );
 }
