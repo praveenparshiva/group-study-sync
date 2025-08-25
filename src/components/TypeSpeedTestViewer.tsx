@@ -24,14 +24,7 @@ export function TypeSpeedTestViewer({ open, onOpenChange }: TypeSpeedTestViewerP
               </div>
               
               {/* Close button */}
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => onOpenChange(false)}
-                className="shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              
             </div>
           </DialogHeader>
           
