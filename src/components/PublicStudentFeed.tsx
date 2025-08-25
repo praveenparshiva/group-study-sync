@@ -23,6 +23,7 @@ import {
   FileText,
   Shield,
   Orbit,
+  Keyboard,
 } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +36,7 @@ import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import FloatingScrollButtons from "@/components/FloatingScrollButtons";
 import { GalaxyViewer } from "@/components/GalaxyViewer";
+import { TypeSpeedTestViewer } from "@/components/TypeSpeedTestViewer";
 
 interface Post {
   id: string;
@@ -72,6 +74,9 @@ const PublicStudentFeed = () => {
   
   // Galaxy viewer state
   const [galaxyViewerOpen, setGalaxyViewerOpen] = useState(false);
+  
+  // Type speed test viewer state
+  const [typeSpeedTestOpen, setTypeSpeedTestOpen] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -315,6 +320,15 @@ const PublicStudentFeed = () => {
               <Orbit className="h-4 w-4 mr-2" />
               MilkyWay-Galaxy
             </Button>
+            <Button
+              onClick={() => setTypeSpeedTestOpen(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center"
+            >
+              <Keyboard className="h-4 w-4 mr-2" />
+              TypeSpeed
+            </Button>
             <ThemeToggle />
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
@@ -538,6 +552,7 @@ const PublicStudentFeed = () => {
 
       <FloatingScrollButtons />
       <GalaxyViewer open={galaxyViewerOpen} onOpenChange={setGalaxyViewerOpen} />
+      <TypeSpeedTestViewer open={typeSpeedTestOpen} onOpenChange={setTypeSpeedTestOpen} />
     </div>
   );
 };
