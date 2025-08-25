@@ -18,7 +18,16 @@ const sampleTexts = [
   "Music is a universal language that connects people across cultures and generations. Every melody tells a story and every rhythm moves the soul.",
   "Cooking is both an art and a science. The perfect combination of ingredients, timing, and technique creates memorable culinary experiences.",
   "Nature provides us with incredible beauty and resources. Protecting our environment is essential for future generations to enjoy.",
+  "Traveling opens our minds to new cultures and perspectives. Each journey enriches our understanding of the world and broadens our horizons.",
+  "Exercise strengthens the body and refreshes the mind. A healthy lifestyle balances physical activity, nutrition, and rest.",
+  "History teaches us valuable lessons about humanity. By studying the past, we gain insights to build a better future.",
+  "Friendship brings joy, support, and companionship. True friends stand by us through both challenges and triumphs.",
+  "Creativity fuels innovation and self-expression. Whether through art, writing, or invention, imagination shapes our reality.",
+  "Education empowers individuals to pursue their dreams. Knowledge is the foundation of progress and personal growth.",
+  "Mindfulness helps us stay present and appreciate each moment. A calm mind leads to clarity, peace, and resilience.",
+  "Teamwork combines diverse strengths to achieve common goals. Collaboration often leads to outcomes greater than the sum of individual efforts.",
 ];
+
 
 export function TypeSpeedTest({ onRestart }: TypeSpeedTestProps) {
   const [currentText, setCurrentText] = useState('');
