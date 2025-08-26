@@ -11,11 +11,8 @@ import {
   Users, 
   MessageSquare, 
   Trash2, 
-  UserX, 
-  UserCheck,
   BookOpen,
-  LogOut,
-  AlertTriangle
+  LogOut
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -53,7 +50,6 @@ interface UserProfile {
   email: string;
   full_name: string | null;
   role: 'student' | 'admin';
-  is_banned: boolean;
   created_at: string;
 }
 
@@ -66,7 +62,6 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalPosts: 0,
-    bannedUsers: 0,
   });
 
   const fetchPosts = async () => {
@@ -131,7 +126,6 @@ const AdminDashboard = () => {
         setStats({
           totalUsers: data?.length || 0,
           totalPosts: posts.length,
-          bannedUsers: data?.filter(user => user.is_banned).length || 0,
         });
       }
     } catch (error) {
@@ -151,7 +145,6 @@ const AdminDashboard = () => {
     setStats({
       totalUsers: users.length,
       totalPosts: posts.length,
-      bannedUsers: users.filter(user => user.is_banned).length,
     });
   }, [users, posts]);
 
@@ -180,30 +173,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleBanUser = async (userId: string, ban: boolean) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_banned: ban })
-        .eq('user_id', userId);
-
-      if (error) {
-        toast({
-          title: `Error ${ban ? 'banning' : 'unbanning'} user`,
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: `User ${ban ? 'banned' : 'unbanned'}`,
-          description: `The user has been ${ban ? 'banned' : 'unbanned'} successfully.`,
-        });
-        fetchUsers();
-      }
-    } catch (error) {
-      console.error(`Error ${ban ? 'banning' : 'unbanning'} user:`, error);
-    }
-  };
 
   if (loading) {
     return (
@@ -246,7 +215,7 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -263,15 +232,6 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalPosts}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Banned Users</CardTitle>
-              <UserX className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-destructive">{stats.bannedUsers}</div>
             </CardContent>
           </Card>
         </div>
@@ -344,7 +304,7 @@ const AdminDashboard = () => {
 
             <div className="grid gap-4">
               {users.map((user) => (
-                <Card key={user.id} className={user.is_banned ? "border-destructive" : ""}>
+                <Card key={user.id}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
@@ -357,58 +317,8 @@ const AdminDashboard = () => {
                             <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                               {user.role}
                             </Badge>
-                            {user.is_banned && (
-                              <Badge variant="destructive">
-                                <AlertTriangle className="h-3 w-3 mr-1" />
-                                Banned
-                              </Badge>
-                            )}
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {user.role === 'student' && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button 
-                                variant={user.is_banned ? "outline" : "destructive"} 
-                                size="sm"
-                              >
-                                {user.is_banned ? (
-                                  <>
-                                    <UserCheck className="h-4 w-4 mr-2" />
-                                    Unban
-                                  </>
-                                ) : (
-                                  <>
-                                    <UserX className="h-4 w-4 mr-2" />
-                                    Ban
-                                  </>
-                                )}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  {user.is_banned ? 'Unban User' : 'Ban User'}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to {user.is_banned ? 'unban' : 'ban'} this user?
-                                  {!user.is_banned && ' They will be unable to access the platform.'}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleBanUser(user.user_id, !user.is_banned)}
-                                  className={user.is_banned ? "" : "bg-destructive hover:bg-destructive/90"}
-                                >
-                                  {user.is_banned ? 'Unban User' : 'Ban User'}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
                       </div>
                     </div>
                   </CardContent>
