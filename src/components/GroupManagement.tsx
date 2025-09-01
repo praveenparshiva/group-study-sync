@@ -283,7 +283,7 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
               Create Group
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogContent className="w-full h-full max-w-full p-6 overflow-y-auto rounded-none">
             <DialogHeader>
               <DialogTitle>Create New Group</DialogTitle>
             </DialogHeader>
