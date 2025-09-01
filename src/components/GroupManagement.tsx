@@ -70,6 +70,10 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
   const [isManagePostsOpen, setIsManagePostsOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [groupPosts, setGroupPosts] = useState<Post[]>([]);
+  const [isAddPostsOpen, setIsAddPostsOpen] = useState(false);
+  const [availablePosts, setAvailablePosts] = useState<Post[]>([]);
+  const [selectedNewPosts, setSelectedNewPosts] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Form states
   const [groupTitle, setGroupTitle] = useState("");
@@ -264,6 +268,101 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
     );
   };
 
+  const fetchAvailablePosts = async (groupId: string) => {
+    if (!groupId) return;
+
+    try {
+      // Get posts already in the group
+      const { data: groupPostsData, error: groupPostsError } = await supabase
+        .from('post_groups')
+        .select('post_id')
+        .eq('group_id', groupId);
+
+      if (groupPostsError) throw groupPostsError;
+
+      const postsInGroup = groupPostsData?.map(pg => pg.post_id) || [];
+
+      // Get all posts not in the group
+      const { data: allPosts, error: allPostsError } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('is_deleted', false)
+        .not('id', 'in', `(${postsInGroup.length > 0 ? postsInGroup.join(',') : 'null'})`)
+        .order('created_at', { ascending: false });
+
+      if (allPostsError) throw allPostsError;
+
+      setAvailablePosts(allPosts || []);
+    } catch (error) {
+      console.error('Error fetching available posts:', error);
+    }
+  };
+
+  const handleOpenAddPosts = () => {
+    if (selectedGroup) {
+      fetchAvailablePosts(selectedGroup);
+      setIsAddPostsOpen(true);
+      setSelectedNewPosts([]);
+      setSearchQuery("");
+    }
+  };
+
+  const handleToggleNewPostSelection = (postId: string) => {
+    setSelectedNewPosts(prev => 
+      prev.includes(postId)
+        ? prev.filter(id => id !== postId)
+        : [...prev, postId]
+    );
+  };
+
+  const handleAddPostsToGroup = async () => {
+    if (!selectedGroup || selectedNewPosts.length === 0) return;
+
+    try {
+      const postGroupInserts = selectedNewPosts.map(postId => ({
+        group_id: selectedGroup,
+        post_id: postId,
+      }));
+
+      const { error } = await supabase
+        .from('post_groups')
+        .insert(postGroupInserts);
+
+      if (error) throw error;
+
+      toast({
+        title: "Posts added",
+        description: `Added ${selectedNewPosts.length} post(s) to the group.`,
+      });
+
+      setIsAddPostsOpen(false);
+      setSelectedNewPosts([]);
+      setSearchQuery("");
+      
+      // Refresh group posts and groups
+      handleManageGroupPosts(selectedGroup);
+      fetchGroups();
+      onGroupsChange();
+    } catch (error) {
+      console.error('Error adding posts to group:', error);
+      toast({
+        title: "Error adding posts",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredAvailablePosts = availablePosts.filter(post => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      (post.title && post.title.toLowerCase().includes(query)) ||
+      post.content.toLowerCase().includes(query) ||
+      post.post_type.toLowerCase().includes(query)
+    );
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -434,7 +533,13 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
       <Dialog open={isManagePostsOpen} onOpenChange={setIsManagePostsOpen}>
         <DialogContent className="max-w-6xl w-full max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Manage Group Posts</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Manage Group Posts</DialogTitle>
+              <Button onClick={handleOpenAddPosts}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Posts
+              </Button>
+            </div>
           </DialogHeader>
           <div className="space-y-4">
             {groupPosts.length === 0 ? (
@@ -466,6 +571,78 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
                 ))}
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Posts to Group Dialog */}
+      <Dialog open={isAddPostsOpen} onOpenChange={setIsAddPostsOpen}>
+        <DialogContent className="max-w-4xl w-full max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Add Posts to Group</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="search-posts">Search Posts</Label>
+              <Input
+                id="search-posts"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by title, content, or type..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Select Posts to Add ({selectedNewPosts.length} selected)</Label>
+              <div className="border rounded-md p-4 max-h-96 overflow-auto space-y-2">
+                {filteredAvailablePosts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No posts available to add</p>
+                  </div>
+                ) : (
+                  filteredAvailablePosts.map((post) => (
+                    <div key={post.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
+                      <Checkbox
+                        id={`new-post-${post.id}`}
+                        checked={selectedNewPosts.includes(post.id)}
+                        onCheckedChange={() => handleToggleNewPostSelection(post.id)}
+                      />
+                      <label
+                        htmlFor={`new-post-${post.id}`}
+                        className="flex-1 cursor-pointer text-sm"
+                      >
+                        <div className="font-medium">
+                          {post.title || "Untitled Post"}
+                        </div>
+                        <div className="text-muted-foreground truncate">
+                          {post.content.substring(0, 100)}...
+                        </div>
+                      </label>
+                      <Badge variant="outline" className="text-xs">
+                        {post.post_type}
+                      </Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddPostsOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddPostsToGroup}
+                disabled={selectedNewPosts.length === 0}
+              >
+                Add {selectedNewPosts.length} Post{selectedNewPosts.length !== 1 ? 's' : ''}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
