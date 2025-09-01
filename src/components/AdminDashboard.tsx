@@ -15,6 +15,7 @@ import {
   LogOut
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GroupManagement } from "@/components/GroupManagement";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -240,6 +241,7 @@ const AdminDashboard = () => {
         <Tabs defaultValue="posts" className="space-y-6">
           <TabsList>
             <TabsTrigger value="posts">Manage Posts</TabsTrigger>
+            <TabsTrigger value="groups">Manage Groups</TabsTrigger>
             <TabsTrigger value="users">Manage Users</TabsTrigger>
           </TabsList>
 
@@ -292,6 +294,10 @@ const AdminDashboard = () => {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="groups" className="space-y-6">
+            <GroupManagement posts={posts} onGroupsChange={fetchPosts} />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
