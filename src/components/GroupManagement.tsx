@@ -432,7 +432,7 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
 
       {/* Manage Group Posts Dialog */}
       <Dialog open={isManagePostsOpen} onOpenChange={setIsManagePostsOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+        <DialogContent className="max-w-6xl w-full max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>Manage Group Posts</DialogTitle>
           </DialogHeader>
