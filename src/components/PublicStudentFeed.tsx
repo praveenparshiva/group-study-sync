@@ -163,7 +163,7 @@ const PublicStudentFeed = () => {
         .select(`
           *,
           post_groups(
-            post_id,
+            position,
             posts(*)
           )
         `)
@@ -177,11 +177,15 @@ const PublicStudentFeed = () => {
       // Process groups with their posts
       const groupsWithPosts = await Promise.all(
         (groupsData || []).map(async (group) => {
-          const groupPosts = group.post_groups?.map(pg => pg.posts).filter(Boolean) || [];
+          // Sort posts by position within each group
+          const sortedGroupPosts = (group.post_groups || [])
+            .sort((a, b) => (a.position || 0) - (b.position || 0))
+            .map(pg => pg.posts)
+            .filter(Boolean);
           
           // Get unique user IDs from group posts
           const userIds = [
-            ...new Set(groupPosts.map((post: any) => post.user_id).filter(Boolean)),
+            ...new Set(sortedGroupPosts.map((post: any) => post.user_id).filter(Boolean)),
           ];
 
           let profilesData = null;
@@ -200,7 +204,7 @@ const PublicStudentFeed = () => {
           }
 
           // Combine posts with profiles
-          const postsWithProfiles = groupPosts.map((post: any) => ({
+          const postsWithProfiles = sortedGroupPosts.map((post: any) => ({
             ...post,
             profiles:
               post.user_id && profilesData

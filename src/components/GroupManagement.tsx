@@ -34,6 +34,8 @@ import {
   Edit,
   UserPlus,
   UserMinus,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 
 interface Post {
@@ -42,6 +44,10 @@ interface Post {
   content: string;
   post_type: string;
   created_at: string;
+}
+
+interface PostWithPosition extends Post {
+  position: number;
 }
 
 interface Group {
@@ -69,7 +75,7 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isManagePostsOpen, setIsManagePostsOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-  const [groupPosts, setGroupPosts] = useState<Post[]>([]);
+  const [groupPosts, setGroupPosts] = useState<PostWithPosition[]>([]);
   const [isAddPostsOpen, setIsAddPostsOpen] = useState(false);
   const [availablePosts, setAvailablePosts] = useState<Post[]>([]);
   const [selectedNewPosts, setSelectedNewPosts] = useState<string[]>([]);
@@ -146,10 +152,11 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
 
       if (groupError) throw groupError;
 
-      // Add posts to the group
-      const postGroupInserts = selectedPosts.map(postId => ({
+      // Add posts to the group with sequential positions
+      const postGroupInserts = selectedPosts.map((postId, index) => ({
         group_id: groupData.id,
         post_id: postId,
+        position: index,
       }));
 
       const { error: postGroupError } = await supabase
@@ -209,20 +216,24 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
   const handleManageGroupPosts = async (groupId: string) => {
     setSelectedGroup(groupId);
     
-    // Fetch posts in this group
+    // Fetch posts in this group ordered by position
     try {
       const { data, error } = await supabase
         .from('post_groups')
         .select(`
-          post_id,
+          position,
           posts(*)
         `)
-        .eq('group_id', groupId);
+        .eq('group_id', groupId)
+        .order('position', { ascending: true });
 
       if (error) throw error;
 
-      const postsInGroup = data?.map(pg => pg.posts).filter(Boolean) || [];
-      setGroupPosts(postsInGroup as Post[]);
+      const postsInGroup = data?.map(pg => ({
+        ...pg.posts,
+        position: pg.position
+      })).filter(Boolean) || [];
+      setGroupPosts(postsInGroup as PostWithPosition[]);
       setIsManagePostsOpen(true);
     } catch (error) {
       console.error('Error fetching group posts:', error);
@@ -319,9 +330,20 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
     if (!selectedGroup || selectedNewPosts.length === 0) return;
 
     try {
-      const postGroupInserts = selectedNewPosts.map(postId => ({
+      // Get current max position in the group
+      const { data: maxPositionData } = await supabase
+        .from('post_groups')
+        .select('position')
+        .eq('group_id', selectedGroup)
+        .order('position', { ascending: false })
+        .limit(1);
+
+      const maxPosition = maxPositionData?.[0]?.position ?? -1;
+
+      const postGroupInserts = selectedNewPosts.map((postId, index) => ({
         group_id: selectedGroup,
         post_id: postId,
+        position: maxPosition + 1 + index,
       }));
 
       const { error } = await supabase
@@ -362,6 +384,54 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
       post.post_type.toLowerCase().includes(query)
     );
   });
+
+  const handleMovePost = async (postId: string, direction: 'up' | 'down') => {
+    if (!selectedGroup) return;
+
+    try {
+      const currentIndex = groupPosts.findIndex(p => p.id === postId);
+      if (currentIndex === -1) return;
+
+      const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      if (targetIndex < 0 || targetIndex >= groupPosts.length) return;
+
+      const currentPost = groupPosts[currentIndex];
+      const targetPost = groupPosts[targetIndex];
+
+      // Swap positions in database
+      const { error } = await supabase
+        .from('post_groups')
+        .update({ position: targetPost.position })
+        .eq('group_id', selectedGroup)
+        .eq('post_id', currentPost.id);
+
+      if (error) throw error;
+
+      const { error: error2 } = await supabase
+        .from('post_groups')
+        .update({ position: currentPost.position })
+        .eq('group_id', selectedGroup)
+        .eq('post_id', targetPost.id);
+
+      if (error2) throw error2;
+
+      toast({
+        title: "Position updated",
+        description: `Moved post ${direction === 'up' ? 'up' : 'down'} successfully.`,
+      });
+
+      // Refresh the posts to show new order
+      handleManageGroupPosts(selectedGroup);
+      onGroupsChange();
+    } catch (error) {
+      console.error('Error reordering posts:', error);
+      toast({
+        title: "Error reordering posts",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -549,20 +619,49 @@ export const GroupManagement = ({ posts, onGroupsChange }: GroupManagementProps)
               </div>
             ) : (
               <div className="space-y-2">
-                {groupPosts.map((post) => (
-                  <div key={post.id} className="flex items-center justify-between p-3 border rounded">
-                    <div className="flex-1">
-                      <div className="font-medium">
-                        {post.title || "Untitled Post"}
+                {groupPosts.map((post, index) => (
+                  <div key={post.id} className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex flex-col items-center space-y-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMovePost(post.id, 'up')}
+                          disabled={index === 0}
+                          className="h-7 w-7 p-0 hover:bg-muted"
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </Button>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {index + 1}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleMovePost(post.id, 'down')}
+                          disabled={index === groupPosts.length - 1}
+                          className="h-7 w-7 p-0 hover:bg-muted"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div className="text-sm text-muted-foreground truncate">
-                        {post.content.substring(0, 100)}...
+                      <div className="flex-1">
+                        <div className="font-medium">
+                          {post.title || "Untitled Post"}
+                        </div>
+                        <div className="text-sm text-muted-foreground truncate">
+                          {post.content.substring(0, 100)}...
+                        </div>
+                        <Badge variant="outline" className="text-xs mt-1">
+                          {post.post_type}
+                        </Badge>
                       </div>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleRemovePostFromGroup(post.id)}
+                      className="hover:bg-destructive hover:text-destructive-foreground"
                     >
                       <UserMinus className="h-4 w-4 mr-1" />
                       Remove
