@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageSquare, Code, Calendar, User, Image, FileText, Download } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { LinkifyText } from "@/utils/linkify-library";
 
 interface Post {
   id: string;
@@ -142,7 +143,7 @@ const PostCard = ({ post }: PostCardProps) => {
             </div>
             {post.content && (
               <div className="prose prose-sm max-w-none dark:prose-invert">
-                <p className="whitespace-pre-wrap">{post.content}</p>
+                <LinkifyText>{post.content}</LinkifyText>
               </div>
             )}
           </div>
@@ -174,13 +175,13 @@ const PostCard = ({ post }: PostCardProps) => {
             </div>
             {post.content && (
               <div className="prose prose-sm max-w-none dark:prose-invert">
-                <p className="whitespace-pre-wrap">{post.content}</p>
+                <LinkifyText>{post.content}</LinkifyText>
               </div>
             )}
           </div>
         ) : (
           <div className="prose prose-sm max-w-none dark:prose-invert">
-            <p className="whitespace-pre-wrap">{post.content}</p>
+            <LinkifyText>{post.content}</LinkifyText>
           </div>
         )}
       </CardContent>
