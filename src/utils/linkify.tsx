@@ -5,8 +5,9 @@ import React from 'react';
  * Converts URLs in text to clickable links using regex pattern matching
  */
 
-// URL regex pattern that matches http/https URLs
-const URL_REGEX = /(https?:\/\/(?:[-\w.])+(?::[0-9]+)?(?:\/(?:[\w\/_.])*)?(?:\?(?:[\w&=%.])*)?(?:#(?:[\w.])*)?)/gi;
+// Comprehensive URL regex pattern that matches http/https URLs with all special characters
+// This pattern captures everything from http/https until whitespace or end of string
+const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 
 export const linkifyText = (text: string): React.ReactElement => {
   if (!text) return <></>;
@@ -16,19 +17,24 @@ export const linkifyText = (text: string): React.ReactElement => {
   return (
     <>
       {parts.map((part, index) => {
-        // Check if this part is a URL by testing against the regex
-        if (URL_REGEX.test(part)) {
-          // Reset regex lastIndex to avoid issues with global flag
-          URL_REGEX.lastIndex = 0;
+        // Check if this part is a URL by testing if it starts with http/https
+        if (part.match(/^https?:\/\//)) {
+          // Clean up the URL by removing trailing punctuation that might not be part of the URL
+          let cleanUrl = part;
+          const trailingPunctuation = /[.,;:!?)]$/;
+          if (trailingPunctuation.test(part)) {
+            cleanUrl = part.replace(trailingPunctuation, '');
+          }
+          
           return (
             <a
               key={index}
-              href={part}
+              href={cleanUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-400 underline hover:text-blue-500 transition-colors"
             >
-              {part}
+              {cleanUrl}
             </a>
           );
         }
