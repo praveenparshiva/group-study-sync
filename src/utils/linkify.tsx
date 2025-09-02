@@ -38,9 +38,11 @@ export const linkifyText = (text: string): React.ReactElement => {
             <a
               key={index}
               href={cleanUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-400 underline hover:text-blue-500 transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                window.open(cleanUrl, "_blank", "noopener,noreferrer");
+              }}
+              className="text-blue-400 underline hover:text-blue-500 transition-colors cursor-pointer"
             >
               {part} {/* Show original text but link to converted URL */}
             </a>
