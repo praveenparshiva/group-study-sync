@@ -26,6 +26,14 @@ export const linkifyText = (text: string): React.ReactElement => {
             cleanUrl = part.replace(trailingPunctuation, '');
           }
           
+          // Convert youtu.be short links to full YouTube URLs
+          const youtubeShortMatch = cleanUrl.match(/https?:\/\/youtu\.be\/([a-zA-Z0-9_-]+)(\?.*)?/);
+          if (youtubeShortMatch) {
+            const videoId = youtubeShortMatch[1];
+            const queryParams = youtubeShortMatch[2] || '';
+            cleanUrl = `https://www.youtube.com/watch?v=${videoId}${queryParams.replace('?', '&')}`;
+          }
+          
           return (
             <a
               key={index}
@@ -34,7 +42,7 @@ export const linkifyText = (text: string): React.ReactElement => {
               rel="noopener noreferrer"
               className="text-blue-400 underline hover:text-blue-500 transition-colors"
             >
-              {cleanUrl}
+              {part} {/* Show original text but link to converted URL */}
             </a>
           );
         }
