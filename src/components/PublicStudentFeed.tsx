@@ -24,6 +24,7 @@ import {
   Shield,
   Orbit,
   Keyboard,
+  Zap,
 } from "lucide-react";
 import {
   Dialog,
@@ -37,6 +38,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import FloatingScrollButtons from "@/components/FloatingScrollButtons";
 import { GalaxyViewer } from "@/components/GalaxyViewer";
 import { TypeSpeedTestViewer } from "@/components/TypeSpeedTestViewer";
+import { BlackholeViewer } from "@/components/BlackholeViewer";
 import { GroupCard } from "@/components/GroupCard";
 
 interface Post {
@@ -91,6 +93,9 @@ const PublicStudentFeed = () => {
   
   // Type speed test viewer state
   const [typeSpeedTestOpen, setTypeSpeedTestOpen] = useState(false);
+  
+  // Blackhole viewer state
+  const [blackholeViewerOpen, setBlackholeViewerOpen] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -611,19 +616,32 @@ const PublicStudentFeed = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Search */}
         <div className="mb-8">
-          <div className="relative max-w-md">
-            {/* Gradient animated border wrapper */}
-            <div className="p-[2px] rounded-lg animate-gradient-border bg-[linear-gradient(315deg,#22dfe6_5%,#0022a0_95%)] bg-[length:200%_200%]">
-              <div className="relative bg-background rounded-lg">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search posts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 rounded-lg border-0 focus:ring-0 focus:outline-none"
-                />
+          <div className="flex items-center justify-between gap-4">
+            <div className="relative max-w-md flex-1">
+              {/* Gradient animated border wrapper */}
+              <div className="p-[2px] rounded-lg animate-gradient-border bg-[linear-gradient(315deg,#22dfe6_5%,#0022a0_95%)] bg-[length:200%_200%]">
+                <div className="relative bg-background rounded-lg">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search posts..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 rounded-lg border-0 focus:ring-0 focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
+            
+            {/* Blackhole Button */}
+            <Button
+              onClick={() => setBlackholeViewerOpen(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center bg-gradient-to-r from-purple-900/20 to-black/20 border-purple-500/30 hover:border-purple-400/50 hover:bg-gradient-to-r hover:from-purple-800/30 hover:to-black/30 text-foreground hover:text-purple-200 transition-all duration-300 shadow-lg hover:shadow-purple-500/20"
+            >
+              <Zap className="h-4 w-4 mr-2 text-purple-400" />
+              Blackhole
+            </Button>
           </div>
         </div>
 
@@ -675,6 +693,7 @@ const PublicStudentFeed = () => {
       <FloatingScrollButtons />
       <GalaxyViewer open={galaxyViewerOpen} onOpenChange={setGalaxyViewerOpen} />
       <TypeSpeedTestViewer open={typeSpeedTestOpen} onOpenChange={setTypeSpeedTestOpen} />
+      <BlackholeViewer open={blackholeViewerOpen} onOpenChange={setBlackholeViewerOpen} />
     </div>
   );
 };
