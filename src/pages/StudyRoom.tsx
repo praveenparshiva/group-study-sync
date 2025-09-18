@@ -57,7 +57,13 @@ export default function StudyRoom() {
   const { messages, sendMessage } = useRealtimeRoom(roomId || "");
 
   useEffect(() => {
-    if (!user || !roomId) {
+    if (!user) {
+      toast.error("Please sign in to join a study room");
+      navigate("/auth");
+      return;
+    }
+    
+    if (!roomId) {
       navigate("/study-rooms");
       return;
     }

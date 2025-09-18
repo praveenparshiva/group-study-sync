@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Users, Clock, Search } from "lucide-react";
+import { Plus, Users, Clock, Search, ArrowLeft } from "lucide-react";
 
 interface StudyRoom {
   id: string;
@@ -38,12 +38,9 @@ export default function StudyRooms() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    // Allow both authenticated and anonymous users to view study rooms
     fetchRooms();
-  }, [user, navigate]);
+  }, []);
 
   const fetchRooms = async () => {
     try {
@@ -149,15 +146,51 @@ export default function StudyRooms() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto">
+        {/* Header with back button */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Feed
+          </Button>
+        </div>
+        
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Study Rooms</h1>
             <p className="text-muted-foreground">Join or create virtual study sessions with video chat and collaborative tools</p>
+            {!user && (
+              <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Note:</strong> You can browse study rooms, but you'll need to{" "}
+                  <button 
+                    onClick={() => navigate("/auth")}
+                    className="underline hover:no-underline text-yellow-900 dark:text-yellow-100 font-medium"
+                  >
+                    sign in
+                  </button>{" "}
+                  to create or join rooms.
+                </p>
+              </div>
+            )}
           </div>
           
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
+              <Button 
+                className="flex items-center gap-2"
+                disabled={!user}
+                onClick={() => {
+                  if (!user) {
+                    toast.error("Please sign in to create a room");
+                    navigate("/auth");
+                  }
+                }}
+              >
                 <Plus className="w-4 h-4" />
                 Create Room
               </Button>
@@ -220,10 +253,15 @@ export default function StudyRooms() {
             <p className="text-muted-foreground mb-4">
               {searchTerm ? "Try a different search term" : "Be the first to create a study room!"}
             </p>
-            {!searchTerm && (
+            {!searchTerm && user && (
               <Button onClick={() => setCreateDialogOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Room
+              </Button>
+            )}
+            {!searchTerm && !user && (
+              <Button onClick={() => navigate("/auth")} variant="outline">
+                Sign in to Create Room
               </Button>
             )}
           </div>
@@ -261,9 +299,14 @@ export default function StudyRooms() {
                 <Button 
                   onClick={() => joinRoom(room.id)}
                   className="w-full"
-                  disabled={room.participant_count >= room.max_participants}
+                  disabled={room.participant_count >= room.max_participants || !user}
                 >
-                  {room.participant_count >= room.max_participants ? "Room Full" : "Join Room"}
+                  {room.participant_count >= room.max_participants 
+                    ? "Room Full" 
+                    : !user 
+                      ? "Sign in to Join" 
+                      : "Join Room"
+                  }
                 </Button>
               </div>
             ))}
