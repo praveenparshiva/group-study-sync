@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { MessageSquare, Code, Calendar, User, Image, FileText, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Code, Calendar, User, Image, FileText, Download, Copy, Check } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { LinkifiedText } from "@/utils/linkify";
@@ -29,6 +31,18 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post }: PostCardProps) => {
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', {
@@ -120,13 +134,32 @@ const PostCard = ({ post }: PostCardProps) => {
       </CardHeader>
       <CardContent>
         {post.post_type === 'code' ? (
-          <div className="rounded-lg overflow-hidden">
+          <div className="relative rounded-lg overflow-hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm hover:bg-background/90"
+              onClick={() => copyToClipboard(post.content)}
+            >
+              {copied ? (
+                <>
+                  <Check className="h-4 w-4 mr-1" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 mr-1" />
+                  Copy
+                </>
+              )}
+            </Button>
             <SyntaxHighlighter
               language={post.code_language || 'text'}
               style={tomorrow}
               customStyle={{
                 margin: 0,
                 borderRadius: '0.5rem',
+                paddingTop: '3rem',
               }}
             >
               {post.content}
