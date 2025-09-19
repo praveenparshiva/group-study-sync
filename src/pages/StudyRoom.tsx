@@ -59,7 +59,7 @@ export default function StudyRoom() {
   useEffect(() => {
     if (!user) {
       toast.error("Please sign in to join a study room");
-      navigate("/auth");
+      navigate(`/login?redirect=/study-rooms/${roomId}`);
       return;
     }
     

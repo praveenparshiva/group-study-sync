@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import UserAuth from "./pages/UserAuth";
 import Dashboard from "./pages/Dashboard";
 import StudyRooms from "./pages/StudyRooms";
 import StudyRoom from "./pages/StudyRoom";
@@ -25,6 +26,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<UserAuth />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/study-rooms" element={<StudyRooms />} />
               <Route path="/study-rooms/:roomId" element={<StudyRoom />} />

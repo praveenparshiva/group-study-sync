@@ -168,7 +168,7 @@ export default function StudyRooms() {
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
                   <strong>Note:</strong> You can browse study rooms, but you'll need to{" "}
                   <button 
-                    onClick={() => navigate("/auth")}
+                    onClick={() => navigate("/login?redirect=/study-rooms")}
                     className="underline hover:no-underline text-yellow-900 dark:text-yellow-100 font-medium"
                   >
                     sign in
@@ -187,7 +187,7 @@ export default function StudyRooms() {
                 onClick={() => {
                   if (!user) {
                     toast.error("Please sign in to create a room");
-                    navigate("/auth");
+                    navigate("/login?redirect=/study-rooms");
                   }
                 }}
               >
@@ -260,7 +260,7 @@ export default function StudyRooms() {
               </Button>
             )}
             {!searchTerm && !user && (
-              <Button onClick={() => navigate("/auth")} variant="outline">
+              <Button onClick={() => navigate("/login?redirect=/study-rooms")} variant="outline">
                 Sign in to Create Room
               </Button>
             )}
