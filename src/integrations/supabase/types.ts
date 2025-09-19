@@ -352,6 +352,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      is_room_participant: {
+        Args: { room_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       is_user_banned: {
         Args: { user_uuid: string }
         Returns: boolean

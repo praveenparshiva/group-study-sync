@@ -44,20 +44,32 @@ export default function StudyRooms() {
 
   const fetchRooms = async () => {
     try {
-      const { data: roomsData, error } = await supabase
+      // First get all active rooms
+      const { data: roomsData, error: roomsError } = await supabase
         .from("study_rooms")
-        .select(`
-          *,
-          room_participants(count)
-        `)
-        .eq("status", "active");
+        .select("*")
+        .eq("status", "active")
+        .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (roomsError) throw roomsError;
 
-      const roomsWithCount = roomsData?.map(room => ({
-        ...room,
-        participant_count: room.room_participants?.[0]?.count || 0
-      })) || [];
+      // Then get participant counts for each room
+      const roomsWithCount = await Promise.all(
+        (roomsData || []).map(async (room) => {
+          const { count, error: countError } = await supabase
+            .from("room_participants")
+            .select("*", { count: "exact", head: true })
+            .eq("room_id", room.id)
+            .eq("is_active", true);
+
+          if (countError) {
+            console.error("Error fetching participant count:", countError);
+            return { ...room, participant_count: 0 };
+          }
+
+          return { ...room, participant_count: count || 0 };
+        })
+      );
 
       setRooms(roomsWithCount);
     } catch (error) {
@@ -72,7 +84,7 @@ export default function StudyRooms() {
     if (!user || !newRoom.name.trim()) return;
 
     try {
-      const { data, error } = await supabase
+      const { data: roomData, error: roomError } = await supabase
         .from("study_rooms")
         .insert({
           ...newRoom,
@@ -81,7 +93,21 @@ export default function StudyRooms() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (roomError) throw roomError;
+
+      // Automatically add the creator as a participant
+      const { error: participantError } = await supabase
+        .from("room_participants")
+        .insert({
+          room_id: roomData.id,
+          user_id: user.id,
+          role: "host"
+        });
+
+      if (participantError) {
+        console.error("Error adding creator as participant:", participantError);
+        // Don't throw here - room is created, just log the error
+      }
 
       toast.success("Study room created!");
       setCreateDialogOpen(false);
@@ -93,8 +119,11 @@ export default function StudyRooms() {
         room_type: "general"
       });
       
+      // Refresh the rooms list to show the new room
+      await fetchRooms();
+      
       // Navigate to the new room
-      navigate(`/study-rooms/${data.id}`);
+      navigate(`/study-rooms/${roomData.id}`);
     } catch (error) {
       console.error("Error creating room:", error);
       toast.error("Failed to create room");
@@ -102,17 +131,34 @@ export default function StudyRooms() {
   };
 
   const joinRoom = async (roomId: string) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("Please sign in to join a room");
+      navigate(`/login?redirect=/study-rooms/${roomId}`);
+      return;
+    }
 
     try {
-      const { error } = await supabase
+      // Check if user is already a participant
+      const { data: existingParticipant } = await supabase
         .from("room_participants")
-        .insert({
-          room_id: roomId,
-          user_id: user.id
-        });
+        .select("id")
+        .eq("room_id", roomId)
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .single();
 
-      if (error) throw error;
+      if (!existingParticipant) {
+        // Add user as participant if not already joined
+        const { error } = await supabase
+          .from("room_participants")
+          .insert({
+            room_id: roomId,
+            user_id: user.id,
+            role: "participant"
+          });
+
+        if (error) throw error;
+      }
 
       navigate(`/study-rooms/${roomId}`);
     } catch (error) {
