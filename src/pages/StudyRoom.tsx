@@ -9,6 +9,7 @@ import { VideoGrid } from "@/components/VideoGrid";
 import { CollaborativeWhiteboard } from "@/components/CollaborativeWhiteboard";
 import { RoomChat } from "@/components/RoomChat";
 import { PomodoroTimer } from "@/components/PomodoroTimer";
+import { useWebRTC } from "@/hooks/useWebRTC";
 import { toast } from "sonner";
 import { 
   LogOut, 
@@ -18,9 +19,12 @@ import {
   Mic, 
   MicOff,
   Monitor,
+  MonitorOff,
   MessageSquare,
   Timer,
-  Palette
+  Palette,
+  Copy,
+  Settings
 } from "lucide-react";
 
 interface StudyRoomData {
@@ -49,12 +53,19 @@ export default function StudyRoom() {
   const [room, setRoom] = useState<StudyRoomData | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [activeTab, setActiveTab] = useState("video");
-  const [videoEnabled, setVideoEnabled] = useState(true);
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [screenSharing, setScreenSharing] = useState(false);
+  const [rightSidebarTab, setRightSidebarTab] = useState("chat");
   const [loading, setLoading] = useState(true);
 
   const { messages, sendMessage } = useRealtimeRoom(roomId || "");
+  const { 
+    isVideoEnabled, 
+    isAudioEnabled, 
+    isScreenSharing, 
+    mediaError,
+    toggleVideo, 
+    toggleAudio, 
+    toggleScreenShare 
+  } = useWebRTC(roomId || "");
 
   useEffect(() => {
     if (!user) {
@@ -144,6 +155,7 @@ export default function StudyRoom() {
 
       if (error) throw error;
       
+      toast.success("Left room");
       navigate("/study-rooms");
     } catch (error) {
       console.error("Error leaving room:", error);
@@ -151,16 +163,10 @@ export default function StudyRoom() {
     }
   };
 
-  const toggleVideo = () => {
-    setVideoEnabled(!videoEnabled);
-  };
-
-  const toggleAudio = () => {
-    setAudioEnabled(!audioEnabled);
-  };
-
-  const toggleScreenShare = () => {
-    setScreenSharing(!screenSharing);
+  const copyRoomLink = () => {
+    const link = `${window.location.origin}/study-room/${roomId}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Room link copied to clipboard!");
   };
 
   if (loading) {
@@ -190,19 +196,33 @@ export default function StudyRoom() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4">
+      <header className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-border px-6 py-4 sticky top-0 z-50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold text-card-foreground">{room.name}</h1>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="w-4 h-4" />
-              <span>{participants.length}/{room.max_participants}</span>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              {room.name}
+            </h1>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-sm bg-muted/50 rounded-full px-3 py-1.5">
+                <Users className="w-4 h-4 text-primary" />
+                <span className="font-medium">{participants.length + 1}/{room.max_participants}</span>
+              </div>
+              {mediaError && (
+                <div className="flex items-center gap-2 text-sm text-destructive bg-destructive/10 rounded-full px-3 py-1.5">
+                  <Settings className="w-4 h-4" />
+                  <span className="text-xs">Media Error</span>
+                </div>
+              )}
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <PomodoroTimer roomId={roomId!} />
-            <Button onClick={leaveRoom} variant="destructive" size="sm">
+            <Button onClick={copyRoomLink} variant="outline" size="sm" className="hidden sm:flex">
+              <Copy className="w-4 h-4 mr-2" />
+              Copy Link
+            </Button>
+            <Button onClick={leaveRoom} variant="destructive" size="sm" className="hover:scale-105 transition-transform">
               <LogOut className="w-4 h-4 mr-2" />
               Leave Room
             </Button>
@@ -211,51 +231,64 @@ export default function StudyRoom() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* Main Area */}
-        <div className="flex-1 p-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="video" className="flex items-center gap-2">
+        <div className="flex-1 flex flex-col p-6 min-w-0">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <TabsList className="mb-6 bg-muted/50 p-1 rounded-xl">
+              <TabsTrigger 
+                value="video" 
+                className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"
+              >
                 <Video className="w-4 h-4" />
                 Video Chat
               </TabsTrigger>
-              <TabsTrigger value="whiteboard" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="whiteboard" 
+                className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"
+              >
                 <Palette className="w-4 h-4" />
                 Whiteboard
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="video" className="h-full">
+            <TabsContent value="video" className="flex-1 min-h-0">
               <VideoGrid 
+                roomId={roomId!}
                 participants={participants}
-                videoEnabled={videoEnabled}
-                audioEnabled={audioEnabled}
-                screenSharing={screenSharing}
+                videoEnabled={isVideoEnabled}
+                audioEnabled={isAudioEnabled}
+                screenSharing={isScreenSharing}
               />
             </TabsContent>
             
-            <TabsContent value="whiteboard" className="h-full">
+            <TabsContent value="whiteboard" className="flex-1 min-h-0">
               <CollaborativeWhiteboard roomId={roomId!} />
             </TabsContent>
           </Tabs>
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-80 bg-card border-l border-border flex flex-col">
-          <Tabs defaultValue="chat" className="flex-1 flex flex-col">
-            <TabsList className="m-4 mb-0">
-              <TabsTrigger value="chat" className="flex items-center gap-2">
+        <div className="w-96 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-l border-border flex flex-col">
+          <Tabs value={rightSidebarTab} onValueChange={setRightSidebarTab} className="flex-1 flex flex-col">
+            <TabsList className="m-4 mb-0 bg-muted/50 p-1 rounded-xl">
+              <TabsTrigger 
+                value="chat" 
+                className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"
+              >
                 <MessageSquare className="w-4 h-4" />
                 Chat
               </TabsTrigger>
-              <TabsTrigger value="timer" className="flex items-center gap-2">
+              <TabsTrigger 
+                value="timer" 
+                className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg transition-all"
+              >
                 <Timer className="w-4 h-4" />
                 Timer
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="chat" className="flex-1 flex flex-col px-4 pb-4">
+            <TabsContent value="chat" className="flex-1 flex flex-col px-4 pb-4 min-h-0">
               <RoomChat 
                 roomId={roomId!}
                 messages={messages}
@@ -263,7 +296,7 @@ export default function StudyRoom() {
               />
             </TabsContent>
             
-            <TabsContent value="timer" className="flex-1 px-4 pb-4">
+            <TabsContent value="timer" className="flex-1 px-4 pb-4 min-h-0 overflow-auto">
               <div className="mt-4">
                 <PomodoroTimer roomId={roomId!} expanded />
               </div>
@@ -273,42 +306,64 @@ export default function StudyRoom() {
       </div>
 
       {/* Bottom Controls */}
-      <footer className="bg-card border-t border-border px-6 py-4">
+      <footer className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-t border-border px-6 py-4">
         <div className="flex items-center justify-center gap-4">
           <Button
             onClick={toggleVideo}
-            variant={videoEnabled ? "default" : "destructive"}
-            size="sm"
+            variant={isVideoEnabled ? "default" : "destructive"}
+            size="lg"
+            className="rounded-full hover:scale-105 transition-all shadow-lg"
           >
-            {videoEnabled ? (
-              <Video className="w-4 h-4 mr-2" />
+            {isVideoEnabled ? (
+              <Video className="w-5 h-5 mr-2" />
             ) : (
-              <VideoOff className="w-4 h-4 mr-2" />
+              <VideoOff className="w-5 h-5 mr-2" />
             )}
-            {videoEnabled ? "Video On" : "Video Off"}
+            <span className="hidden sm:inline">
+              {isVideoEnabled ? "Video On" : "Video Off"}
+            </span>
           </Button>
           
           <Button
             onClick={toggleAudio}
-            variant={audioEnabled ? "default" : "destructive"}
-            size="sm"
+            variant={isAudioEnabled ? "default" : "destructive"}
+            size="lg"
+            className="rounded-full hover:scale-105 transition-all shadow-lg"
           >
-            {audioEnabled ? (
-              <Mic className="w-4 h-4 mr-2" />
+            {isAudioEnabled ? (
+              <Mic className="w-5 h-5 mr-2" />
             ) : (
-              <MicOff className="w-4 h-4 mr-2" />
+              <MicOff className="w-5 h-5 mr-2" />
             )}
-            {audioEnabled ? "Mic On" : "Mic Off"}
+            <span className="hidden sm:inline">
+              {isAudioEnabled ? "Mic On" : "Mic Off"}
+            </span>
           </Button>
           
           <Button
             onClick={toggleScreenShare}
-            variant={screenSharing ? "secondary" : "outline"}
-            size="sm"
+            variant={isScreenSharing ? "secondary" : "outline"}
+            size="lg"
+            className="rounded-full hover:scale-105 transition-all shadow-lg"
           >
-            <Monitor className="w-4 h-4 mr-2" />
-            {screenSharing ? "Stop Sharing" : "Share Screen"}
+            {isScreenSharing ? (
+              <MonitorOff className="w-5 h-5 mr-2" />
+            ) : (
+              <Monitor className="w-5 h-5 mr-2" />
+            )}
+            <span className="hidden sm:inline">
+              {isScreenSharing ? "Stop Sharing" : "Share Screen"}
+            </span>
           </Button>
+        </div>
+        
+        <div className="flex justify-center mt-4">
+          <p className="text-xs text-muted-foreground">
+            {participants.length === 0 
+              ? "Invite others to join this study room" 
+              : `${participants.length + 1} participant${participants.length > 0 ? 's' : ''} in this room`
+            }
+          </p>
         </div>
       </footer>
     </div>

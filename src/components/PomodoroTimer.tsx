@@ -266,38 +266,47 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
 
   if (!expanded) {
     return (
-      <div className="flex items-center gap-2 bg-card px-3 py-2 rounded-lg border border-border">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3 bg-card/90 backdrop-blur-sm px-4 py-3 rounded-xl border border-border shadow-sm hover:shadow-md transition-all">
+        <div className="flex items-center gap-3">
           {isBreak ? (
-            <Coffee className="w-4 h-4 text-orange-500" />
+            <div className="flex items-center gap-2">
+              <Coffee className="w-4 h-4 text-orange-500" />
+              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+            </div>
           ) : (
-            <Timer className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-2">
+              <Timer className="w-4 h-4 text-primary" />
+              {session && session.status === 'running' && (
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              )}
+            </div>
           )}
           
-          <span className="text-sm font-mono">
-            {session && session.status === 'running' ? formatTime(timeLeft) : '--:--'}
-          </span>
-          
-          {session && (
-            <span className="text-xs text-muted-foreground">
-              Cycle {session.current_cycle}
+          <div className="text-center">
+            <span className="text-sm font-mono font-bold">
+              {session && session.status === 'running' ? formatTime(timeLeft) : '--:--'}
             </span>
-          )}
+            {session && (
+              <div className="text-xs text-muted-foreground">
+                Cycle {session.current_cycle}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-1">
           {!session || session.status === 'stopped' || session.status === 'paused' ? (
-            <Button onClick={startTimer} size="sm" variant="outline">
+            <Button onClick={startTimer} size="sm" variant="outline" className="rounded-full">
               <Play className="w-3 h-3" />
             </Button>
           ) : (
-            <Button onClick={pauseTimer} size="sm" variant="outline">
+            <Button onClick={pauseTimer} size="sm" variant="outline" className="rounded-full">
               <Pause className="w-3 h-3" />
             </Button>
           )}
           
           {session && session.status !== 'stopped' && (
-            <Button onClick={stopTimer} size="sm" variant="outline">
+            <Button onClick={stopTimer} size="sm" variant="outline" className="rounded-full">
               <Square className="w-3 h-3" />
             </Button>
           )}
@@ -307,61 +316,68 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-background rounded-xl border border-border p-6 shadow-sm">
       <div className="text-center">
-        <div className="w-32 h-32 mx-auto relative">
+        <div className="relative w-40 h-40 mx-auto mb-6">
           <Progress 
             value={getProgress()} 
-            className="h-32 w-32 rounded-full"
+            className="h-40 w-40 rounded-full [&>div]:rounded-full"
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-2xl font-mono font-bold">
+              <div className="text-3xl font-mono font-bold mb-1">
                 {session && session.status === 'running' ? formatTime(timeLeft) : '--:--'}
               </div>
-              <div className="text-xs text-muted-foreground">
-                {isBreak ? 'Break' : 'Focus'}
+              <div className="text-sm text-muted-foreground font-medium">
+                {isBreak ? 'Break Time' : 'Focus Time'}
               </div>
+              {session && session.status === 'running' && (
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse mx-auto mt-2" />
+              )}
             </div>
           </div>
         </div>
         
         {session && (
-          <div className="mt-4 text-sm text-muted-foreground">
-            Cycle {session.current_cycle} • {isBreak ? 'Break Time' : 'Focus Time'}
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Timer className="w-4 h-4" />
+            <span>Cycle {session.current_cycle}</span>
+            <span>•</span>
+            <span>{isBreak ? 'Break Session' : 'Focus Session'}</span>
           </div>
         )}
       </div>
 
-      <div className="flex justify-center gap-2">
+      <div className="flex justify-center gap-3">
         {!session || session.status === 'stopped' || session.status === 'paused' ? (
-          <Button onClick={startTimer} className="flex items-center gap-2">
+          <Button onClick={startTimer} className="flex items-center gap-2 rounded-xl px-6 hover:scale-105 transition-transform">
             <Play className="w-4 h-4" />
             Start
           </Button>
         ) : (
-          <Button onClick={pauseTimer} variant="secondary" className="flex items-center gap-2">
+          <Button onClick={pauseTimer} variant="secondary" className="flex items-center gap-2 rounded-xl px-6 hover:scale-105 transition-transform">
             <Pause className="w-4 h-4" />
             Pause
           </Button>
         )}
         
-        <Button onClick={stopTimer} variant="outline" className="flex items-center gap-2">
+        <Button onClick={stopTimer} variant="outline" className="flex items-center gap-2 rounded-xl px-6 hover:scale-105 transition-transform">
           <Square className="w-4 h-4" />
           Stop
         </Button>
         
-        <Button onClick={resetSession} variant="outline" className="flex items-center gap-2">
+        <Button onClick={resetSession} variant="outline" className="flex items-center gap-2 rounded-xl px-6 hover:scale-105 transition-transform">
           <RotateCcw className="w-4 h-4" />
           Reset
         </Button>
       </div>
 
       {(!session || session.status === 'stopped') && (
-        <div className="space-y-4">
+        <div className="space-y-4 border-t border-border pt-6">
+          <h4 className="font-semibold text-center">Timer Settings</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="duration">Focus (min)</Label>
+              <Label htmlFor="duration" className="text-sm font-medium">Focus Duration (min)</Label>
               <Input
                 id="duration"
                 type="number"
@@ -372,11 +388,12 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
                   ...prev, 
                   duration: Number(e.target.value) 
                 }))}
+                className="mt-1 rounded-xl"
               />
             </div>
             
             <div>
-              <Label htmlFor="breakDuration">Break (min)</Label>
+              <Label htmlFor="breakDuration" className="text-sm font-medium">Break Duration (min)</Label>
               <Input
                 id="breakDuration"
                 type="number"
@@ -387,6 +404,7 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
                   ...prev, 
                   breakDuration: Number(e.target.value) 
                 }))}
+                className="mt-1 rounded-xl"
               />
             </div>
           </div>

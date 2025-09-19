@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Mic, MicOff, Video, VideoOff, User } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mic, MicOff, Video, VideoOff, User, AlertCircle } from "lucide-react";
+import { useWebRTC } from "@/hooks/useWebRTC";
 
 interface Participant {
   id: string;
@@ -14,97 +15,30 @@ interface Participant {
 }
 
 interface VideoGridProps {
+  roomId: string;
   participants: Participant[];
   videoEnabled: boolean;
   audioEnabled: boolean;
   screenSharing: boolean;
 }
 
-interface VideoStream {
-  userId: string;
-  stream: MediaStream | null;
-  videoEnabled: boolean;
-  audioEnabled: boolean;
-}
-
-export const VideoGrid = ({ participants, videoEnabled, audioEnabled, screenSharing }: VideoGridProps) => {
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [videoStreams, setVideoStreams] = useState<VideoStream[]>([]);
+export const VideoGrid = ({ roomId, participants, videoEnabled, audioEnabled, screenSharing }: VideoGridProps) => {
+  const { 
+    localStream, 
+    remoteStreams, 
+    isVideoEnabled, 
+    isAudioEnabled, 
+    mediaError 
+  } = useWebRTC(roomId);
+  
   const localVideoRef = useRef<HTMLVideoElement>(null);
 
-  // Initialize local media stream
+  // Update local video element
   useEffect(() => {
-    const initializeMedia = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: videoEnabled,
-          audio: audioEnabled
-        });
-
-        setLocalStream(stream);
-        
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-      } catch (error) {
-        console.error("Error accessing media devices:", error);
-      }
-    };
-
-    initializeMedia();
-
-    return () => {
-      localStream?.getTracks().forEach(track => track.stop());
-    };
-  }, []);
-
-  // Update stream constraints when video/audio settings change
-  useEffect(() => {
-    if (!localStream) return;
-
-    const videoTracks = localStream.getVideoTracks();
-    const audioTracks = localStream.getAudioTracks();
-
-    videoTracks.forEach(track => {
-      track.enabled = videoEnabled;
-    });
-
-    audioTracks.forEach(track => {
-      track.enabled = audioEnabled;
-    });
-  }, [localStream, videoEnabled, audioEnabled]);
-
-  // Handle screen sharing
-  useEffect(() => {
-    if (!screenSharing || !localStream) return;
-
-    const startScreenShare = async () => {
-      try {
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true
-        });
-
-        // Replace video track with screen share
-        const videoTrack = displayStream.getVideoTracks()[0];
-        const sender = null; // This would be the peer connection sender in a real WebRTC setup
-
-        // Handle screen share end
-        videoTrack.onended = () => {
-          // Switch back to camera
-          navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-              const newVideoTrack = stream.getVideoTracks()[0];
-              // Replace the screen share track with camera track
-            });
-        };
-      } catch (error) {
-        console.error("Error sharing screen:", error);
-      }
-    };
-
-    startScreenShare();
-  }, [screenSharing, localStream]);
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream]);
 
   const getGridLayout = (count: number) => {
     if (count <= 1) return "grid-cols-1";
@@ -114,14 +48,21 @@ export const VideoGrid = ({ participants, videoEnabled, audioEnabled, screenShar
     return "grid-cols-3 md:grid-cols-4";
   };
 
-  const totalParticipants = participants.length + 1; // +1 for local user
+  const totalParticipants = participants.length + 1 + remoteStreams.length;
 
   return (
-    <div className="h-full bg-background rounded-lg border border-border overflow-hidden">
-      <div className={`h-full grid ${getGridLayout(totalParticipants)} gap-2 p-4`}>
+    <div className="h-full bg-background rounded-xl border border-border overflow-hidden shadow-lg">
+      {mediaError && (
+        <Alert className="m-4 border-destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{mediaError}</AlertDescription>
+        </Alert>
+      )}
+      
+      <div className={`h-full grid ${getGridLayout(totalParticipants)} gap-3 p-4`}>
         {/* Local Video */}
-        <div className="relative bg-card rounded-lg overflow-hidden border border-border">
-          {videoEnabled ? (
+        <div className="relative bg-card rounded-xl overflow-hidden border border-border shadow-md hover:shadow-lg transition-shadow">
+          {isVideoEnabled && localStream ? (
             <video
               ref={localVideoRef}
               autoPlay
@@ -130,9 +71,9 @@ export const VideoGrid = ({ participants, videoEnabled, audioEnabled, screenShar
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted">
-              <Avatar className="w-16 h-16">
-                <AvatarFallback>
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+              <Avatar className="w-16 h-16 shadow-lg">
+                <AvatarFallback className="bg-primary text-primary-foreground">
                   <User className="w-8 h-8" />
                 </AvatarFallback>
               </Avatar>
@@ -140,25 +81,25 @@ export const VideoGrid = ({ participants, videoEnabled, audioEnabled, screenShar
           )}
           
           {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
           
           {/* Controls */}
-          <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-            <span className="text-white text-sm font-medium bg-black/50 px-2 py-1 rounded">
+          <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+            <span className="text-white text-sm font-semibold bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
               You
             </span>
             
-            <div className="flex gap-1">
-              <div className={`p-1.5 rounded ${audioEnabled ? 'bg-green-500' : 'bg-red-500'}`}>
-                {audioEnabled ? (
+            <div className="flex gap-2">
+              <div className={`p-2 rounded-full backdrop-blur-sm ${isAudioEnabled ? 'bg-green-500/90' : 'bg-red-500/90'} transition-colors`}>
+                {isAudioEnabled ? (
                   <Mic className="w-3 h-3 text-white" />
                 ) : (
                   <MicOff className="w-3 h-3 text-white" />
                 )}
               </div>
               
-              <div className={`p-1.5 rounded ${videoEnabled ? 'bg-green-500' : 'bg-red-500'}`}>
-                {videoEnabled ? (
+              <div className={`p-2 rounded-full backdrop-blur-sm ${isVideoEnabled ? 'bg-green-500/90' : 'bg-red-500/90'} transition-colors`}>
+                {isVideoEnabled ? (
                   <Video className="w-3 h-3 text-white" />
                 ) : (
                   <VideoOff className="w-3 h-3 text-white" />
@@ -168,47 +109,129 @@ export const VideoGrid = ({ participants, videoEnabled, audioEnabled, screenShar
           </div>
         </div>
 
-        {/* Remote Participants */}
-        {participants.map((participant) => (
-          <div key={participant.id} className="relative bg-card rounded-lg overflow-hidden border border-border">
-            {/* Placeholder for remote video - in a real implementation, this would show the remote stream */}
-            <div className="w-full h-full flex items-center justify-center bg-muted">
-              <Avatar className="w-16 h-16">
-                <AvatarImage src={participant.profiles.avatar_url} />
-                <AvatarFallback>
-                  {participant.profiles.full_name?.charAt(0) || <User className="w-8 h-8" />}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
-            
-            {/* Participant Info */}
-            <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-              <span className="text-white text-sm font-medium bg-black/50 px-2 py-1 rounded">
-                {participant.profiles.full_name || "Anonymous"}
-              </span>
-              
-              {participant.role === 'host' && (
-                <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
-                  Host
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+        {/* Remote Video Streams */}
+        {remoteStreams.map((remoteStream) => {
+          const participant = participants.find(p => p.user_id === remoteStream.userId);
+          return (
+            <RemoteVideoCard 
+              key={remoteStream.userId}
+              stream={remoteStream.stream}
+              participant={participant}
+            />
+          );
+        })}
 
-      {/* No participants message */}
-      {participants.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Waiting for others to join...</p>
+        {/* Placeholder Participants (not yet connected via WebRTC) */}
+        {participants
+          .filter(p => !remoteStreams.some(rs => rs.userId === p.user_id))
+          .map((participant) => (
+            <div key={participant.id} className="relative bg-card rounded-xl overflow-hidden border border-border shadow-md hover:shadow-lg transition-shadow">
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+                <div className="text-center">
+                  <Avatar className="w-16 h-16 mb-3 shadow-lg mx-auto">
+                    <AvatarImage src={participant.profiles.avatar_url} />
+                    <AvatarFallback className="bg-secondary text-secondary-foreground">
+                      {participant.profiles.full_name?.charAt(0) || <User className="w-8 h-8" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm text-muted-foreground">Connecting...</p>
+                </div>
+              </div>
+              
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              
+              {/* Participant Info */}
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                <span className="text-white text-sm font-semibold bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                  {participant.profiles.full_name || "Anonymous"}
+                </span>
+                
+                {participant.role === 'host' && (
+                  <span className="text-xs bg-primary/90 backdrop-blur-sm text-primary-foreground px-2 py-1 rounded-full font-medium">
+                    Host
+                  </span>
+                )}
+              </div>
+            </div>
+          ))
+        }
+
+        {/* No participants message */}
+        {participants.length === 0 && remoteStreams.length === 0 && (
+          <div className="col-span-full flex items-center justify-center">
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground mb-2">Waiting for others to join...</p>
+              <p className="text-sm text-muted-foreground/60">Share the room link to invite participants</p>
+            </div>
           </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Remote video card component
+const RemoteVideoCard = ({ stream, participant }: { stream: MediaStream | null; participant?: Participant }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  const hasVideo = stream?.getVideoTracks().some(track => track.enabled) ?? false;
+  const hasAudio = stream?.getAudioTracks().some(track => track.enabled) ?? false;
+
+  return (
+    <div className="relative bg-card rounded-xl overflow-hidden border border-border shadow-md hover:shadow-lg transition-shadow">
+      {hasVideo && stream ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
+          <Avatar className="w-16 h-16 shadow-lg">
+            <AvatarImage src={participant?.profiles.avatar_url} />
+            <AvatarFallback className="bg-secondary text-secondary-foreground">
+              {participant?.profiles.full_name?.charAt(0) || <User className="w-8 h-8" />}
+            </AvatarFallback>
+          </Avatar>
         </div>
       )}
+      
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+      
+      {/* Controls */}
+      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+        <span className="text-white text-sm font-semibold bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-full">
+          {participant?.profiles.full_name || "Participant"}
+        </span>
+        
+        <div className="flex gap-2 items-center">
+          <div className={`p-2 rounded-full backdrop-blur-sm ${hasAudio ? 'bg-green-500/90' : 'bg-red-500/90'} transition-colors`}>
+            {hasAudio ? (
+              <Mic className="w-3 h-3 text-white" />
+            ) : (
+              <MicOff className="w-3 h-3 text-white" />
+            )}
+          </div>
+          
+          {participant?.role === 'host' && (
+            <span className="text-xs bg-primary/90 backdrop-blur-sm text-primary-foreground px-2 py-1 rounded-full font-medium">
+              Host
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

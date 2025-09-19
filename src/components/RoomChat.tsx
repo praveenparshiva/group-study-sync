@@ -69,24 +69,26 @@ export const RoomChat = ({ roomId, messages, onSendMessage }: RoomChatProps) => 
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background rounded-xl border border-border shadow-sm">
       {/* Chat Header */}
-      <div className="p-4 border-b border-border">
-        <h3 className="font-medium text-card-foreground">Room Chat</h3>
-        <p className="text-sm text-muted-foreground">{messages.length} messages</p>
+      <div className="p-4 border-b border-border bg-card/50 rounded-t-xl">
+        <h3 className="font-semibold text-card-foreground">Room Chat</h3>
+        <p className="text-sm text-muted-foreground">
+          {messages.length} message{messages.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-12">
               <div className="text-muted-foreground">
-                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Send className="w-6 h-6" />
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Send className="w-8 h-8" />
                 </div>
-                <p className="text-sm">No messages yet</p>
-                <p className="text-xs">Start the conversation!</p>
+                <p className="text-lg font-medium mb-2">No messages yet</p>
+                <p className="text-sm">Start the conversation!</p>
               </div>
             </div>
           ) : (
@@ -97,18 +99,18 @@ export const RoomChat = ({ roomId, messages, onSendMessage }: RoomChatProps) => 
               return (
                 <div
                   key={message.id}
-                  className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'}`}
+                  className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} animate-fade-in`}
                 >
-                  <Avatar className="w-8 h-8 mt-1">
+                  <Avatar className="w-9 h-9 mt-1 shadow-sm">
                     <AvatarImage src={message.profiles?.avatar_url} />
-                    <AvatarFallback className="text-xs">
+                    <AvatarFallback className="text-xs bg-gradient-to-br from-primary/20 to-primary/10">
                       {displayName.charAt(0) || <User className="w-4 h-4" />}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className={`flex-1 max-w-[80%] ${isOwnMessage ? 'text-right' : ''}`}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs font-medium ${isOwnMessage ? 'order-2' : 'order-1'}`}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-xs font-semibold ${isOwnMessage ? 'order-2 text-primary' : 'order-1'}`}>
                         {isOwnMessage ? 'You' : displayName}
                       </span>
                       <span className={`text-xs text-muted-foreground ${isOwnMessage ? 'order-1' : 'order-2'}`}>
@@ -117,13 +119,13 @@ export const RoomChat = ({ roomId, messages, onSendMessage }: RoomChatProps) => 
                     </div>
                     
                     <div
-                      className={`inline-block px-3 py-2 rounded-lg max-w-full break-words ${
+                      className={`inline-block px-4 py-3 rounded-2xl max-w-full break-words shadow-sm transition-all hover:shadow-md ${
                         isOwnMessage
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted text-muted-foreground'
+                          ? 'bg-primary text-primary-foreground rounded-br-md'
+                          : 'bg-muted text-foreground rounded-bl-md'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap">{message.message}</p>
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.message}</p>
                     </div>
                   </div>
                 </div>
@@ -135,28 +137,29 @@ export const RoomChat = ({ roomId, messages, onSendMessage }: RoomChatProps) => 
       </ScrollArea>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-border">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+      <div className="p-4 border-t border-border bg-card/50 rounded-b-xl">
+        <form onSubmit={handleSubmit} className="flex gap-3">
           <Input
             ref={inputRef}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1"
+            className="flex-1 rounded-xl border-muted-foreground/20 focus:border-primary transition-colors"
             maxLength={500}
           />
           <Button 
             type="submit" 
             size="sm"
             disabled={!newMessage.trim()}
+            className="rounded-xl px-4 hover:scale-105 transition-transform"
           >
             <Send className="w-4 h-4" />
           </Button>
         </form>
         
         {newMessage.length > 0 && (
-          <div className="text-xs text-muted-foreground mt-1 text-right">
+          <div className="text-xs text-muted-foreground mt-2 text-right">
             {newMessage.length}/500
           </div>
         )}
