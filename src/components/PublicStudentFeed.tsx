@@ -427,6 +427,15 @@ const PublicStudentFeed = () => {
           </div>
           <div className="flex items-center space-x-4">
             <Button
+              onClick={() => navigate("/study-rooms")}
+              variant="outline"
+              size="sm"
+              className="flex items-center"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              All Rooms
+            </Button>
+            <Button
               onClick={() => setGalaxyViewerOpen(true)}
               variant="outline"
               size="sm"
@@ -444,7 +453,78 @@ const PublicStudentFeed = () => {
               <Keyboard className="h-4 w-4 mr-2" />
               TypeSpeed
             </Button>
+            <Button
+              onClick={() => navigate("/login")}
+              variant="outline"
+              size="sm"
+              className="flex items-center"
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Login / Admin
+            </Button>
+            
+            {/* Learn More Dialog */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="secondary" size="sm">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Learn More
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>About Campus Connect</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">
+                    Campus Connect is a comprehensive student collaboration platform designed to enhance your learning experience through community interaction and real-time study tools.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <div className="flex items-start space-x-3">
+                      <Users className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold">Study Rooms</h4>
+                        <p className="text-sm text-muted-foreground">Create or join virtual study sessions with video chat, collaborative whiteboard, and synchronized Pomodoro timers.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold">Community Feed</h4>
+                        <p className="text-sm text-muted-foreground">Share posts, code snippets, images, and PDFs with the student community. Get help and collaborate on projects.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <Code className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold">Interactive Tools</h4>
+                        <p className="text-sm text-muted-foreground">Access integrated tools like the Galaxy Viewer for astronomy, Type Speed Test for improving typing skills, and more educational content.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <Shield className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold">Admin Features</h4>
+                        <p className="text-sm text-muted-foreground">Administrators can manage content, organize posts into groups, moderate discussions, and oversee study room activities.</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Get started by creating a new post to share with the community, or join a study room to collaborate with other students in real-time.
+                    </p>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
             <ThemeToggle />
+            
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button className="hover:bg-primary-hover transition-colors">
