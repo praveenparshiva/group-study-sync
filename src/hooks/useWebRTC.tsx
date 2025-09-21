@@ -94,114 +94,154 @@ export const useWebRTC = (roomId: string) => {
 
   // Handle signaling messages
   const handleSignalingMessage = useCallback(async (message: SignalingMessage) => {
-    if (!localStream || !user || message.fromUserId === user.id) return;
+    if (!user || message.fromUserId === user.id) return;
 
     const { fromUserId, type, data } = message;
-    let pc = peers.get(fromUserId);
 
-    if (type === 'user-joined') {
-      // Create offer for new user
-      if (!pc) {
-        pc = createPeerConnection(fromUserId);
-        setPeers(prev => new Map(prev.set(fromUserId, pc!)));
-        
-        // Add local stream tracks
-        localStream.getTracks().forEach(track => {
-          pc!.addTrack(track, localStream);
-        });
+    try {
+      if (type === 'user-joined') {
+        // Only create connection if we don't have one and we have local stream
+        if (!peers.has(fromUserId) && localStream) {
+          const pc = createPeerConnection(fromUserId);
+          setPeers(prev => new Map(prev.set(fromUserId, pc)));
+          
+          // Add local stream tracks
+          localStream.getTracks().forEach(track => {
+            pc.addTrack(track, localStream);
+          });
 
-        // Create and send offer
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        
-        signalingChannelRef.current?.send(JSON.stringify({
-          type: 'offer',
-          fromUserId: user.id,
-          toUserId: fromUserId,
-          data: offer
-        }));
-      }
-    } else if (type === 'offer') {
-      if (!pc) {
-        pc = createPeerConnection(fromUserId);
-        setPeers(prev => new Map(prev.set(fromUserId, pc!)));
-        
-        // Add local stream tracks
-        localStream.getTracks().forEach(track => {
-          pc!.addTrack(track, localStream);
-        });
-      }
+          // Create and send offer with delay to avoid race conditions
+          setTimeout(async () => {
+            try {
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              
+              if (signalingChannelRef.current) {
+                await signalingChannelRef.current.send({
+                  type: 'broadcast',
+                  event: 'signaling',
+                  payload: {
+                    type: 'offer',
+                    fromUserId: user.id,
+                    toUserId: fromUserId,
+                    data: offer
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Error creating offer:', error);
+            }
+          }, Math.random() * 1000); // Random delay to prevent simultaneous offers
+        }
+      } else if (type === 'offer') {
+        let pc = peers.get(fromUserId);
+        if (!pc) {
+          pc = createPeerConnection(fromUserId);
+          setPeers(prev => new Map(prev.set(fromUserId, pc!)));
+          
+          if (localStream) {
+            localStream.getTracks().forEach(track => {
+              pc!.addTrack(track, localStream);
+            });
+          }
+        }
 
-      await pc.setRemoteDescription(data);
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      
-      signalingChannelRef.current?.send(JSON.stringify({
-        type: 'answer',
-        fromUserId: user.id,
-        toUserId: fromUserId,
-        data: answer
-      }));
-    } else if (type === 'answer') {
-      if (pc) {
         await pc.setRemoteDescription(data);
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        
+        if (signalingChannelRef.current) {
+          await signalingChannelRef.current.send({
+            type: 'broadcast',
+            event: 'signaling',
+            payload: {
+              type: 'answer',
+              fromUserId: user.id,
+              toUserId: fromUserId,
+              data: answer
+            }
+          });
+        }
+      } else if (type === 'answer') {
+        const pc = peers.get(fromUserId);
+        if (pc) {
+          await pc.setRemoteDescription(data);
+        }
+      } else if (type === 'ice-candidate') {
+        const pc = peers.get(fromUserId);
+        if (pc) {
+          await pc.addIceCandidate(data);
+        }
+      } else if (type === 'user-left') {
+        const pc = peers.get(fromUserId);
+        if (pc) {
+          pc.close();
+          setPeers(prev => {
+            const newPeers = new Map(prev);
+            newPeers.delete(fromUserId);
+            return newPeers;
+          });
+          setRemoteStreams(prev => {
+            const newStreams = new Map(prev);
+            newStreams.delete(fromUserId);
+            return newStreams;
+          });
+        }
       }
-    } else if (type === 'ice-candidate') {
-      if (pc) {
-        await pc.addIceCandidate(data);
-      }
-    } else if (type === 'user-left') {
-      if (pc) {
-        pc.close();
-        setPeers(prev => {
-          const newPeers = new Map(prev);
-          newPeers.delete(fromUserId);
-          return newPeers;
-        });
-        setRemoteStreams(prev => {
-          const newStreams = new Map(prev);
-          newStreams.delete(fromUserId);
-          return newStreams;
-        });
-      }
+    } catch (error) {
+      console.error('Error handling signaling message:', error);
     }
-  }, [localStream, user, peers, createPeerConnection]);
+  }, [user, peers, localStream, createPeerConnection]);
 
   // Initialize WebRTC connection
   useEffect(() => {
     if (!roomId || !user) return;
 
-    const initWebRTC = async () => {
-      // Initialize local stream
-      const stream = await initializeLocalStream();
-      if (!stream) return;
+    let isActive = true;
+    const currentPeers = new Map<string, RTCPeerConnection>();
 
-      // Set up signaling channel
-      const channel = supabase.channel(`webrtc_${roomId}`);
+    const initWebRTC = async () => {
+      // Initialize local stream only once
+      if (!localStream) {
+        const stream = await initializeLocalStream();
+        if (!stream || !isActive) return;
+      }
+
+      // Set up signaling channel with unique identifier
+      const channelName = `webrtc_${roomId}_${user.id}`;
+      const channel = supabase.channel(channelName);
       signalingChannelRef.current = channel;
 
       channel.on('broadcast', { event: 'signaling' }, (payload) => {
-        handleSignalingMessage(payload.payload as SignalingMessage);
+        if (isActive) {
+          handleSignalingMessage(payload.payload as SignalingMessage);
+        }
       });
 
       await channel.subscribe();
 
-      // Announce presence
-      await channel.send({
-        type: 'broadcast',
-        event: 'signaling',
-        payload: {
-          type: 'user-joined',
-          fromUserId: user.id,
-          data: null
+      // Small delay before announcing presence to avoid race conditions
+      setTimeout(async () => {
+        if (isActive && signalingChannelRef.current) {
+          await channel.send({
+            type: 'broadcast',
+            event: 'signaling',
+            payload: {
+              type: 'user-joined',
+              fromUserId: user.id,
+              data: null
+            }
+          });
         }
-      });
+      }, 500);
     };
 
     initWebRTC();
 
     return () => {
-      // Cleanup
+      isActive = false;
+      
+      // Cleanup signaling
       if (signalingChannelRef.current) {
         signalingChannelRef.current.send({
           type: 'broadcast',
@@ -213,15 +253,14 @@ export const useWebRTC = (roomId: string) => {
           }
         });
         supabase.removeChannel(signalingChannelRef.current);
+        signalingChannelRef.current = null;
       }
 
       // Close all peer connections
+      currentPeers.forEach(pc => pc.close());
       peers.forEach(pc => pc.close());
-      
-      // Stop local stream
-      localStream?.getTracks().forEach(track => track.stop());
     };
-  }, [roomId, user, initializeLocalStream, handleSignalingMessage]);
+  }, [roomId, user?.id]); // Simplified dependencies
 
   // Update local stream when video/audio settings change
   useEffect(() => {
