@@ -53,12 +53,12 @@ export const CollaborativeWhiteboard = ({ roomId }: WhiteboardProps) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
+    // Set canvas size - make it taller
     const resizeCanvas = () => {
       const container = canvas.parentElement;
       if (container) {
         canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight - 60; // Account for toolbar
+        canvas.height = Math.max(container.clientHeight, 800); // Larger minimum height
         redrawCanvas();
       }
     };
@@ -315,7 +315,7 @@ export const CollaborativeWhiteboard = ({ roomId }: WhiteboardProps) => {
   return (
     <div className="h-full flex flex-col bg-background border border-border rounded-lg overflow-hidden">
       {/* Toolbar */}
-      <div className="bg-card border-b border-border p-4 flex items-center gap-4 flex-wrap">
+      <div className="bg-card border-b border-border p-3 flex items-center gap-3 flex-wrap">
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -391,10 +391,10 @@ export const CollaborativeWhiteboard = ({ roomId }: WhiteboardProps) => {
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-auto">
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 cursor-crosshair bg-white"
+          className="cursor-crosshair bg-white"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}

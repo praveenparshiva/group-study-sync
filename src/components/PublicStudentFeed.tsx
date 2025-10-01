@@ -39,7 +39,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import FloatingScrollButtons from "@/components/FloatingScrollButtons";
 import { GalaxyViewer } from "@/components/GalaxyViewer";
 import { TypeSpeedTestViewer } from "@/components/TypeSpeedTestViewer";
-import { BlackholeViewer } from "@/components/BlackholeViewer";
 import { GroupCard } from "@/components/GroupCard";
 
 interface Post {
@@ -94,9 +93,6 @@ const PublicStudentFeed = () => {
   
   // Type speed test viewer state
   const [typeSpeedTestOpen, setTypeSpeedTestOpen] = useState(false);
-  
-  // Blackhole viewer state
-  const [blackholeViewerOpen, setBlackholeViewerOpen] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -725,17 +721,6 @@ const PublicStudentFeed = () => {
                 <Users className="h-4 w-4 mr-2 text-blue-400" />
                 Study Rooms
               </Button>
-              
-              {/* Blackhole Button */}
-              <Button
-                onClick={() => setBlackholeViewerOpen(true)}
-                variant="outline"
-                size="sm"
-                className="flex items-center bg-gradient-to-r from-purple-900/20 to-black/20 border-purple-500/30 hover:border-purple-400/50 hover:bg-gradient-to-r hover:from-purple-800/30 hover:to-black/30 text-foreground hover:text-purple-200 transition-all duration-300 shadow-lg hover:shadow-purple-500/20"
-              >
-                <Zap className="h-4 w-4 mr-2 text-purple-400" />
-                Blackhole
-              </Button>
             </div>
           </div>
         </div>
@@ -788,7 +773,6 @@ const PublicStudentFeed = () => {
       <FloatingScrollButtons />
       <GalaxyViewer open={galaxyViewerOpen} onOpenChange={setGalaxyViewerOpen} />
       <TypeSpeedTestViewer open={typeSpeedTestOpen} onOpenChange={setTypeSpeedTestOpen} />
-      <BlackholeViewer open={blackholeViewerOpen} onOpenChange={setBlackholeViewerOpen} />
     </div>
   );
 };
