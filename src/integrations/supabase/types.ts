@@ -38,6 +38,21 @@ export type Database = {
         }
         Relationships: []
       }
+      kv_store_7adb2e52: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       pomodoro_sessions: {
         Row: {
           break_duration: number
