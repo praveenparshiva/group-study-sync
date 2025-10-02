@@ -20,7 +20,7 @@ const UserAuth = () => {
   useEffect(() => {
     // If user is already logged in, redirect to the intended page or study rooms
     if (user) {
-      const redirectTo = searchParams.get("redirect") || "/study-rooms";
+      const redirectTo = searchParams.get("redirect") || "/private-rooms";
       navigate(redirectTo);
     }
   }, [user, navigate, searchParams]);
@@ -30,7 +30,7 @@ const UserAuth = () => {
     setLoading(true);
     const { error } = await signIn(email, password);
     if (!error) {
-      const redirectTo = searchParams.get("redirect") || "/study-rooms";
+      const redirectTo = searchParams.get("redirect") || "/private-rooms";
       navigate(redirectTo);
     }
     setLoading(false);
@@ -58,7 +58,7 @@ const UserAuth = () => {
           </div>
           <h1 className="text-3xl font-bold text-primary mb-2">Join StudySync</h1>
           <p className="text-muted-foreground">
-            Sign in or create an account to access study rooms
+            Sign in or create an account to access private rooms
           </p>
         </div>
 
@@ -69,7 +69,7 @@ const UserAuth = () => {
               User Authentication
             </CardTitle>
             <CardDescription className="text-center">
-              Access collaborative study rooms and features
+              Access collaborative private rooms and features
             </CardDescription>
           </CardHeader>
           <CardContent>

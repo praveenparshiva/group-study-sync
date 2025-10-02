@@ -9,8 +9,8 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import UserAuth from "./pages/UserAuth";
 import Dashboard from "./pages/Dashboard";
-import StudyRooms from "./pages/StudyRooms";
-import StudyRoom from "./pages/StudyRoom";
+import PrivateRooms from "./pages/PrivateRooms";
+import PrivateRoom from "./pages/PrivateRoom";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,8 +28,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<UserAuth />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/study-rooms" element={<StudyRooms />} />
-              <Route path="/study-rooms/:roomId" element={<StudyRoom />} />
+              <Route path="/private-rooms" element={<PrivateRooms />} />
+              <Route path="/private-room/:roomId" element={<PrivateRoom />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

@@ -423,13 +423,13 @@ const PublicStudentFeed = () => {
           </div>
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => navigate("/study-rooms")}
+              onClick={() => navigate("/private-rooms")}
               variant="outline"
               size="sm"
               className="flex items-center"
             >
               <Users className="h-4 w-4 mr-2" />
-              All Rooms
+              Private Rooms
             </Button>
             <Button
               onClick={() => setGalaxyViewerOpen(true)}
@@ -713,13 +713,13 @@ const PublicStudentFeed = () => {
             <div className="flex items-center gap-3">
               {/* Study Rooms Button */}
               <Button
-                onClick={() => navigate("/study-rooms")}
+                onClick={() => navigate("/private-rooms")}
                 variant="outline"
                 size="sm"
                 className="flex items-center bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-500/30 hover:border-blue-400/50 hover:bg-gradient-to-r hover:from-blue-800/30 hover:to-indigo-800/30 text-foreground hover:text-blue-200 transition-all duration-300 shadow-lg hover:shadow-blue-500/20"
               >
                 <Users className="h-4 w-4 mr-2 text-blue-400" />
-                Study Rooms
+                Private Rooms
               </Button>
             </div>
           </div>

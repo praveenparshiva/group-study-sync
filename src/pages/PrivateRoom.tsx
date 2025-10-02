@@ -1,0 +1,303 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useRealtimeRoom } from "@/hooks/useRealtimeRoom";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Copy, LogOut, Users } from "lucide-react";
+import PrivateRoomChat from "@/components/PrivateRoomChat";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+
+interface RoomData {
+  id: string;
+  name: string;
+  room_code: string;
+  created_at: string;
+}
+
+interface Participant {
+  id: string;
+  user_id: string;
+  role: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string;
+  };
+}
+
+export default function PrivateRoom() {
+  const { roomId } = useParams<{ roomId: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [room, setRoom] = useState<RoomData | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const { messages, sendMessage } = useRealtimeRoom(roomId || "");
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    if (!roomId) {
+      navigate("/private-rooms");
+      return;
+    }
+
+    initializeRoom();
+  }, [roomId, user]);
+
+  const initializeRoom = async () => {
+    if (!roomId || !user) return;
+
+    try {
+      // Fetch room data
+      const { data: roomData, error: roomError } = await supabase
+        .from("study_rooms")
+        .select("id, name, room_code, created_at")
+        .eq("id", roomId)
+        .eq("status", "active")
+        .single();
+
+      if (roomError || !roomData) {
+        toast({
+          title: "Room not found",
+          description: "This room does not exist or has been closed",
+          variant: "destructive",
+        });
+        navigate("/private-rooms");
+        return;
+      }
+
+      setRoom(roomData);
+
+      // Verify user is a participant
+      const { data: participant } = await supabase
+        .from("room_participants")
+        .select("id")
+        .eq("room_id", roomId)
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .single();
+
+      if (!participant) {
+        toast({
+          title: "Access denied",
+          description: "You are not a participant in this room",
+          variant: "destructive",
+        });
+        navigate("/private-rooms");
+        return;
+      }
+
+      await fetchParticipants();
+    } catch (error: any) {
+      console.error("Error initializing room:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load room",
+        variant: "destructive",
+      });
+      navigate("/private-rooms");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchParticipants = async () => {
+    if (!roomId) return;
+
+    const { data, error } = await supabase
+      .from("room_participants")
+      .select(`
+        id,
+        user_id,
+        role,
+        profiles!inner(
+          full_name,
+          avatar_url
+        )
+      `)
+      .eq("room_id", roomId)
+      .eq("is_active", true);
+
+    if (!error && data) {
+      setParticipants(data as unknown as Participant[]);
+    }
+  };
+
+  const handleSendMessage = async (message: string, messageType: string, metadata?: any) => {
+    if (messageType === "text") {
+      await sendMessage(message, messageType);
+    } else {
+      // For file/image/code messages, we need to store additional metadata
+      if (!user || !roomId) return;
+
+      try {
+        const messageData: any = {
+          room_id: roomId,
+          user_id: user.id,
+          message: message,
+          message_type: messageType,
+        };
+
+        if (metadata) {
+          if (metadata.file_url) messageData.file_url = metadata.file_url;
+          if (metadata.file_name) messageData.file_name = metadata.file_name;
+          if (metadata.file_type) messageData.file_type = metadata.file_type;
+          if (metadata.file_size) messageData.file_size = metadata.file_size;
+          if (metadata.code_language) messageData.code_language = metadata.code_language;
+        }
+
+        const { error } = await supabase
+          .from("room_messages")
+          .insert(messageData);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
+    }
+  };
+
+  const copyRoomCode = () => {
+    if (room?.room_code) {
+      navigator.clipboard.writeText(room.room_code);
+      toast({
+        title: "Room code copied!",
+        description: "Share this code with others to invite them",
+      });
+    }
+  };
+
+  const leaveRoom = async () => {
+    if (!roomId || !user) return;
+
+    try {
+      await supabase
+        .from("room_participants")
+        .update({ is_active: false })
+        .eq("room_id", roomId)
+        .eq("user_id", user.id);
+
+      navigate("/private-rooms");
+    } catch (error) {
+      console.error("Error leaving room:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse text-lg">Loading room...</div>
+      </div>
+    );
+  }
+
+  if (!room) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <p className="text-lg text-muted-foreground">Room not found</p>
+          <Button onClick={() => navigate("/private-rooms")}>
+            Back to Rooms
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Header */}
+      <header className="border-b bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/private-rooms")}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-2xl font-bold">{room.name}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="secondary" className="font-mono">
+                    {room.room_code}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyRoomCode}
+                    className="h-6 px-2"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {participants.length} participant{participants.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <Button variant="outline" onClick={leaveRoom}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Leave Room
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="flex-1 container mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Chat Area */}
+        <div className="lg:col-span-3 border rounded-lg overflow-hidden h-[calc(100vh-200px)]">
+          <PrivateRoomChat
+            roomId={roomId!}
+            messages={messages}
+            onSendMessage={handleSendMessage}
+          />
+        </div>
+
+        {/* Participants Sidebar */}
+        <div className="border rounded-lg p-4 h-fit">
+          <h3 className="font-semibold mb-4">Participants</h3>
+          <div className="space-y-3">
+            {participants.map((participant) => (
+              <div key={participant.id} className="flex items-center gap-3">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={participant.profiles?.avatar_url} />
+                  <AvatarFallback>
+                    {participant.profiles?.full_name?.[0] || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {participant.profiles?.full_name}
+                  </p>
+                  {participant.role === "host" && (
+                    <Badge variant="secondary" className="text-xs">
+                      Host
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

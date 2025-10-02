@@ -216,7 +216,12 @@ export type Database = {
       }
       room_messages: {
         Row: {
+          code_language: string | null
           created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
           id: string
           message: string
           message_type: string
@@ -224,7 +229,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          code_language?: string | null
           created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           message: string
           message_type?: string
@@ -232,7 +242,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          code_language?: string | null
           created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           message?: string
           message_type?: string
@@ -293,6 +308,8 @@ export type Database = {
           is_private: boolean
           max_participants: number
           name: string
+          password_hash: string | null
+          room_code: string | null
           room_type: string
           status: string
           updated_at: string
@@ -305,6 +322,8 @@ export type Database = {
           is_private?: boolean
           max_participants?: number
           name: string
+          password_hash?: string | null
+          room_code?: string | null
           room_type?: string
           status?: string
           updated_at?: string
@@ -317,6 +336,8 @@ export type Database = {
           is_private?: boolean
           max_participants?: number
           name?: string
+          password_hash?: string | null
+          room_code?: string | null
           room_type?: string
           status?: string
           updated_at?: string
