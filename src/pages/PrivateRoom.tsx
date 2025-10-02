@@ -36,19 +36,30 @@ export default function PrivateRoom() {
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { messages, sendMessage } = useRealtimeRoom(roomId || "");
+  const { messages, participants: realtimeParticipants, sendMessage } = useRealtimeRoom(roomId || "");
+
+  useEffect(() => {
+    // Update participants state when realtime participants change
+    if (realtimeParticipants && realtimeParticipants.length > 0) {
+      console.log("Participants updated from realtime:", realtimeParticipants.length);
+      setParticipants(realtimeParticipants);
+    }
+  }, [realtimeParticipants]);
 
   useEffect(() => {
     if (!user) {
+      console.log("No user, redirecting to auth");
       navigate("/auth");
       return;
     }
 
     if (!roomId) {
+      console.log("No roomId, redirecting to private-rooms");
       navigate("/private-rooms");
       return;
     }
 
+    console.log("Initializing room:", roomId);
     initializeRoom();
   }, [roomId, user]);
 
@@ -126,42 +137,57 @@ export default function PrivateRoom() {
       .eq("room_id", roomId)
       .eq("is_active", true);
 
-    if (!error && data) {
+    if (error) {
+      console.error("Error fetching participants:", error);
+    } else if (data) {
+      console.log(`Room participants updated: ${data.length} active`);
       setParticipants(data as unknown as Participant[]);
     }
   };
 
   const handleSendMessage = async (message: string, messageType: string, metadata?: any) => {
-    if (messageType === "text") {
-      await sendMessage(message, messageType);
-    } else {
-      // For file/image/code messages, we need to store additional metadata
-      if (!user || !roomId) return;
+    if (!user || !roomId) {
+      console.error("Cannot send message: user or roomId missing");
+      return;
+    }
 
-      try {
-        const messageData: any = {
-          room_id: roomId,
-          user_id: user.id,
-          message: message,
-          message_type: messageType,
-        };
+    console.log("Sending message:", { messageType, hasMetadata: !!metadata });
 
-        if (metadata) {
-          if (metadata.file_url) messageData.file_url = metadata.file_url;
-          if (metadata.file_name) messageData.file_name = metadata.file_name;
-          if (metadata.file_type) messageData.file_type = metadata.file_type;
-          if (metadata.file_size) messageData.file_size = metadata.file_size;
-          if (metadata.code_language) messageData.code_language = metadata.code_language;
-        }
+    try {
+      const messageData: any = {
+        room_id: roomId,
+        user_id: user.id,
+        message: message,
+        message_type: messageType,
+      };
 
-        const { error } = await supabase
-          .from("room_messages")
-          .insert(messageData);
-
-        if (error) throw error;
-      } catch (error) {
-        console.error("Error sending message:", error);
+      if (metadata) {
+        if (metadata.file_url) messageData.file_url = metadata.file_url;
+        if (metadata.file_name) messageData.file_name = metadata.file_name;
+        if (metadata.file_type) messageData.file_type = metadata.file_type;
+        if (metadata.file_size) messageData.file_size = metadata.file_size;
+        if (metadata.code_language) messageData.code_language = metadata.code_language;
       }
+
+      console.log("Inserting message:", messageData);
+
+      const { error } = await supabase
+        .from("room_messages")
+        .insert(messageData);
+
+      if (error) {
+        console.error("Error inserting message:", error);
+        throw error;
+      }
+
+      console.log("Message sent successfully");
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
     }
   };
 

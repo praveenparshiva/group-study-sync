@@ -8,6 +8,11 @@ interface Message {
   message: string;
   message_type: string;
   created_at: string;
+  file_url?: string;
+  file_name?: string;
+  file_type?: string;
+  file_size?: number;
+  code_language?: string;
   profiles?: {
     full_name: string;
     avatar_url: string;
@@ -32,6 +37,11 @@ export const useRealtimeRoom = (roomId: string) => {
           message,
           message_type,
           created_at,
+          file_url,
+          file_name,
+          file_type,
+          file_size,
+          code_language,
           profiles!inner(
             full_name,
             avatar_url
@@ -39,9 +49,12 @@ export const useRealtimeRoom = (roomId: string) => {
         `)
         .eq("room_id", roomId)
         .order("created_at", { ascending: true })
-        .limit(50);
+        .limit(100);
 
-      if (!error && data) {
+      if (error) {
+        console.error("Error fetching messages:", error);
+      } else if (data) {
+        console.log(`Loaded ${data.length} messages for room ${roomId}`);
         setMessages(data as unknown as Message[]);
       }
     };
@@ -65,8 +78,9 @@ export const useRealtimeRoom = (roomId: string) => {
           filter: `room_id=eq.${roomId}`
         },
         async (payload) => {
+          console.log("New message received:", payload.new);
           // Fetch the complete message with profile data
-          const { data } = await supabase
+          const { data, error } = await supabase
             .from("room_messages")
             .select(`
               id,
@@ -74,6 +88,11 @@ export const useRealtimeRoom = (roomId: string) => {
               message,
               message_type,
               created_at,
+              file_url,
+              file_name,
+              file_type,
+              file_size,
+              code_language,
               profiles!inner(
                 full_name,
                 avatar_url
@@ -82,7 +101,10 @@ export const useRealtimeRoom = (roomId: string) => {
             .eq("id", payload.new.id)
             .single();
 
-          if (data) {
+          if (error) {
+            console.error("Error fetching new message:", error);
+          } else if (data) {
+            console.log("Adding message to chat:", data);
             setMessages(prev => [...prev, data as unknown as Message]);
           }
         }
@@ -108,7 +130,7 @@ export const useRealtimeRoom = (roomId: string) => {
       .subscribe();
 
     const fetchParticipants = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("room_participants")
         .select(`
           id,
@@ -124,7 +146,10 @@ export const useRealtimeRoom = (roomId: string) => {
         .eq("room_id", roomId)
         .eq("is_active", true);
 
-      if (data) {
+      if (error) {
+        console.error("Error fetching participants:", error);
+      } else if (data) {
+        console.log(`Updated participants: ${data.length} active`);
         setParticipants(data as any[]);
       }
     };

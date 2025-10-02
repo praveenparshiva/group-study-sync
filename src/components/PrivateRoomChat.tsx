@@ -67,9 +67,18 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Also scroll on mount
+    const timer = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const scrollToBottom = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      const scrollElement = scrollRef.current;
+      requestAnimationFrame(() => {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      });
     }
   };
 
@@ -95,21 +104,37 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
-      const filePath = `${roomId}/${fileName}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `${roomId}/${user.id}/${fileName}`;
+
+      console.log(`Uploading ${type}:`, file.name, "to", filePath);
 
       const { error: uploadError } = await supabase.storage
         .from("room-files")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL for private bucket
+      const { data: signedUrlData, error: urlError } = await supabase.storage
         .from("room-files")
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 365 * 24 * 60 * 60); // 1 year expiry
+
+      if (urlError) {
+        console.error("Signed URL error:", urlError);
+        throw urlError;
+      }
+
+      console.log("File uploaded successfully, signed URL:", signedUrlData.signedUrl);
 
       onSendMessage(file.name, type, {
-        file_url: publicUrl,
+        file_url: signedUrlData.signedUrl,
         file_name: file.name,
         file_type: file.type,
         file_size: file.size,
@@ -120,6 +145,7 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
         description: `${file.name} uploaded successfully`,
       });
     } catch (error: any) {
+      console.error("File upload failed:", error);
       toast({
         title: "Upload failed",
         description: error.message,
@@ -146,11 +172,16 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
 
   const handleCodeSubmit = () => {
     if (codeContent.trim()) {
+      console.log("Sending code snippet:", codeLanguage, codeContent.length, "chars");
       onSendMessage(codeContent, "code", {
         code_language: codeLanguage,
       });
       setCodeContent("");
       setCodeDialogOpen(false);
+      toast({
+        title: "Code snippet sent",
+        description: `${codeLanguage} code shared successfully`,
+      });
     }
   };
 
@@ -170,32 +201,50 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
 
     switch (message.message_type) {
       case "image":
+        if (!message.file_url) {
+          return <p className="text-xs text-muted-foreground">Image unavailable</p>;
+        }
         return (
           <div className="space-y-2">
             <img
               src={message.file_url}
-              alt={message.file_name}
-              className="max-w-xs rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+              alt={message.file_name || "Image"}
+              className="max-w-xs max-h-80 rounded-lg cursor-pointer hover:opacity-90 transition-opacity object-contain"
               onClick={() => window.open(message.file_url, '_blank')}
+              onError={(e) => {
+                console.error("Image load error:", message.file_url);
+                e.currentTarget.style.display = 'none';
+              }}
             />
-            <p className="text-xs text-muted-foreground">{message.file_name}</p>
+            {message.file_name && (
+              <p className="text-xs text-muted-foreground">{message.file_name}</p>
+            )}
           </div>
         );
 
       case "file":
+        if (!message.file_url) {
+          return <p className="text-xs text-muted-foreground">File unavailable</p>;
+        }
         return (
           <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg max-w-xs">
             <FileText className="w-8 h-8 text-primary flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{message.file_name}</p>
-              <p className="text-xs text-muted-foreground">
-                {message.file_size && formatFileSize(message.file_size)}
-              </p>
+              <p className="text-sm font-medium truncate">{message.file_name || "File"}</p>
+              {message.file_size && (
+                <p className="text-xs text-muted-foreground">
+                  {formatFileSize(message.file_size)}
+                </p>
+              )}
             </div>
             <Button
               size="icon"
               variant="ghost"
-              onClick={() => window.open(message.file_url, '_blank')}
+              onClick={() => {
+                console.log("Downloading file:", message.file_url);
+                window.open(message.file_url, '_blank');
+              }}
+              title="Download file"
             >
               <Download className="w-4 h-4" />
             </Button>
@@ -205,14 +254,19 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
       case "code":
         return (
           <div className="max-w-2xl">
-            <div className="text-xs text-muted-foreground mb-1">{message.code_language}</div>
+            <div className="text-xs text-muted-foreground mb-1 capitalize">
+              {message.code_language || 'code'}
+            </div>
             <SyntaxHighlighter
               language={message.code_language || 'javascript'}
               style={vscDarkPlus}
               customStyle={{
                 borderRadius: '0.5rem',
                 fontSize: '0.875rem',
+                maxHeight: '400px',
+                overflow: 'auto',
               }}
+              showLineNumbers
             >
               {message.message}
             </SyntaxHighlighter>
