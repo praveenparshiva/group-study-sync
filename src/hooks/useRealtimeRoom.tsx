@@ -96,6 +96,8 @@ export const useRealtimeRoom = (roomId: string) => {
   useEffect(() => {
     if (!roomId) return;
 
+    console.log("Setting up realtime subscription for room:", roomId);
+
     // Messages subscription
     const messagesChannel = supabase
       .channel(`room_messages_${roomId}`)
@@ -108,49 +110,60 @@ export const useRealtimeRoom = (roomId: string) => {
           filter: `room_id=eq.${roomId}`
         },
         async (payload) => {
-          console.log("New message received via realtime:", payload.new);
+          console.log("🔔 New message received via realtime:", payload.new);
           
-          // Fetch the message
-          const { data: messageData, error: messageError } = await supabase
-            .from("room_messages")
-            .select("*")
-            .eq("id", payload.new.id)
-            .single();
+          // Use payload.new directly instead of fetching again (optimization)
+          const newMessage = payload.new as any;
 
-          if (messageError) {
-            console.error("Error fetching new message:", messageError);
-            return;
-          }
-
-          if (!messageData) {
-            console.error("Message not found:", payload.new.id);
-            return;
-          }
-
-          // Fetch the user's profile
-          const { data: profileData, error: profileError } = await supabase
-            .from("profiles")
-            .select("user_id, full_name, avatar_url")
-            .eq("user_id", messageData.user_id)
-            .single();
-
-          if (profileError) {
-            console.error("Error fetching profile:", profileError);
-          }
-
-          const messageWithProfile = {
-            ...messageData,
-            profiles: profileData || {
-              full_name: "Unknown User",
-              avatar_url: null
+          // Prevent duplicates - check if message already exists
+          setMessages(prev => {
+            const exists = prev.some(msg => msg.id === newMessage.id);
+            if (exists) {
+              console.log("⚠️ Duplicate message detected, skipping:", newMessage.id);
+              return prev;
             }
-          };
 
-          console.log("Adding message to chat with profile:", messageWithProfile);
-          setMessages(prev => [...prev, messageWithProfile as Message]);
+            // Fetch profile for the new message asynchronously
+            (async () => {
+              const { data: profileData } = await supabase
+                .from("profiles")
+                .select("user_id, full_name, avatar_url")
+                .eq("user_id", newMessage.user_id)
+                .single();
+
+              if (profileData) {
+                // Update the message with profile data
+                setMessages(prevMsgs => 
+                  prevMsgs.map(msg => 
+                    msg.id === newMessage.id 
+                      ? { ...msg, profiles: profileData }
+                      : msg
+                  )
+                );
+              }
+            })();
+
+            // Add message immediately with placeholder profile
+            const messageWithProfile = {
+              ...newMessage,
+              profiles: {
+                full_name: "Loading...",
+                avatar_url: null
+              }
+            } as Message;
+
+            console.log("✅ Adding new message to chat:", messageWithProfile.id);
+            // Add and sort by timestamp to ensure correct order
+            const updated = [...prev, messageWithProfile].sort(
+              (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+            return updated;
+          });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("📡 Realtime subscription status:", status);
+      });
 
     // Participants subscription
     const participantsChannel = supabase
@@ -242,6 +255,8 @@ export const useRealtimeRoom = (roomId: string) => {
     if (!user || !roomId || !message.trim()) return;
 
     try {
+      console.log("📤 Sending message:", messageType);
+      
       const { error } = await supabase
         .from("room_messages")
         .insert({
@@ -252,8 +267,11 @@ export const useRealtimeRoom = (roomId: string) => {
         });
 
       if (error) throw error;
+      
+      console.log("✅ Message sent successfully");
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("❌ Error sending message:", error);
+      throw error;
     }
   }, [user, roomId]);
 
