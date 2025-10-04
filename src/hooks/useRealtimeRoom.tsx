@@ -96,11 +96,12 @@ export const useRealtimeRoom = (roomId: string) => {
   useEffect(() => {
     if (!roomId) return;
 
-    console.log("Setting up realtime subscription for room:", roomId);
+    console.log("🔧 Setting up realtime subscription for room:", roomId);
 
-    // Messages subscription
+    // Messages subscription - using unique channel name to avoid conflicts
+    const channelName = `private_room_${roomId}_${Date.now()}`;
     const messagesChannel = supabase
-      .channel(`room_messages_${roomId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -110,59 +111,67 @@ export const useRealtimeRoom = (roomId: string) => {
           filter: `room_id=eq.${roomId}`
         },
         async (payload) => {
-          console.log("🔔 New message received via realtime:", payload.new);
+          console.log("🔔 NEW MESSAGE via realtime:", payload.new);
           
-          // Use payload.new directly instead of fetching again (optimization)
           const newMessage = payload.new as any;
 
-          // Prevent duplicates - check if message already exists
+          // Prevent duplicates
           setMessages(prev => {
-            const exists = prev.some(msg => msg.id === newMessage.id);
-            if (exists) {
-              console.log("⚠️ Duplicate message detected, skipping:", newMessage.id);
+            if (prev.some(msg => msg.id === newMessage.id)) {
+              console.log("⚠️ Duplicate detected, skipping");
               return prev;
             }
 
-            // Fetch profile for the new message asynchronously
-            (async () => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("user_id, full_name, avatar_url")
-                .eq("user_id", newMessage.user_id)
-                .single();
+            // Fetch profile asynchronously without blocking message display
+            supabase
+              .from("profiles")
+              .select("user_id, full_name, avatar_url")
+              .eq("user_id", newMessage.user_id)
+              .single()
+              .then(({ data }) => {
+                if (data) {
+                  setMessages(msgs => 
+                    msgs.map(msg => 
+                      msg.id === newMessage.id 
+                        ? { ...msg, profiles: { full_name: data.full_name, avatar_url: data.avatar_url } }
+                        : msg
+                    )
+                  );
+                }
+              });
 
-              if (profileData) {
-                // Update the message with profile data
-                setMessages(prevMsgs => 
-                  prevMsgs.map(msg => 
-                    msg.id === newMessage.id 
-                      ? { ...msg, profiles: profileData }
-                      : msg
-                  )
-                );
-              }
-            })();
-
-            // Add message immediately with placeholder profile
-            const messageWithProfile = {
-              ...newMessage,
+            // Add immediately with all available data
+            const messageWithProfile: Message = {
+              id: newMessage.id,
+              user_id: newMessage.user_id,
+              message: newMessage.message,
+              message_type: newMessage.message_type,
+              created_at: newMessage.created_at,
+              file_url: newMessage.file_url,
+              file_name: newMessage.file_name,
+              file_type: newMessage.file_type,
+              file_size: newMessage.file_size,
+              code_language: newMessage.code_language,
               profiles: {
                 full_name: "Loading...",
                 avatar_url: null
               }
-            } as Message;
+            };
 
-            console.log("✅ Adding new message to chat:", messageWithProfile.id);
-            // Add and sort by timestamp to ensure correct order
-            const updated = [...prev, messageWithProfile].sort(
+            console.log("✅ Message added instantly:", messageWithProfile.id);
+            return [...prev, messageWithProfile].sort(
               (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
             );
-            return updated;
           });
         }
       )
       .subscribe((status) => {
-        console.log("📡 Realtime subscription status:", status);
+        console.log("📡 Subscription status:", status);
+        if (status === 'SUBSCRIBED') {
+          console.log("✅ Real-time subscription ACTIVE for room:", roomId);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error("❌ Real-time subscription ERROR");
+        }
       });
 
     // Participants subscription
@@ -255,20 +264,20 @@ export const useRealtimeRoom = (roomId: string) => {
     if (!user || !roomId || !message.trim()) return;
 
     try {
-      console.log("📤 Sending message:", messageType);
-      
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("room_messages")
         .insert({
           room_id: roomId,
           user_id: user.id,
           message: message.trim(),
           message_type: messageType
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
       
-      console.log("✅ Message sent successfully");
+      console.log("✅ Message sent successfully:", data?.id);
     } catch (error) {
       console.error("❌ Error sending message:", error);
       throw error;
