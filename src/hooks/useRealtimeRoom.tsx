@@ -29,34 +29,64 @@ export const useRealtimeRoom = (roomId: string) => {
     if (!roomId) return;
 
     const fetchMessages = async () => {
-      const { data, error } = await supabase
+      console.log("Fetching messages for room:", roomId);
+      
+      // Fetch messages without join
+      const { data: messagesData, error: messagesError } = await supabase
         .from("room_messages")
-        .select(`
-          id,
-          user_id,
-          message,
-          message_type,
-          created_at,
-          file_url,
-          file_name,
-          file_type,
-          file_size,
-          code_language,
-          profiles!inner(
-            full_name,
-            avatar_url
-          )
-        `)
+        .select("*")
         .eq("room_id", roomId)
         .order("created_at", { ascending: true })
         .limit(100);
 
-      if (error) {
-        console.error("Error fetching messages:", error);
-      } else if (data) {
-        console.log(`Loaded ${data.length} messages for room ${roomId}`);
-        setMessages(data as unknown as Message[]);
+      if (messagesError) {
+        console.error("Error fetching messages:", messagesError);
+        return;
       }
+
+      if (!messagesData || messagesData.length === 0) {
+        console.log("No messages found for room:", roomId);
+        setMessages([]);
+        return;
+      }
+
+      console.log(`Fetched ${messagesData.length} messages from database`);
+
+      // Get unique user IDs
+      const userIds = [...new Set(messagesData.map(m => m.user_id))];
+      
+      // Fetch profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", userIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+      }
+
+      // Create a map of user_id to profile
+      const profilesMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.user_id, {
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url
+          });
+        });
+      }
+
+      // Combine messages with profiles
+      const messagesWithProfiles = messagesData.map(msg => ({
+        ...msg,
+        profiles: profilesMap.get(msg.user_id) || {
+          full_name: "Unknown User",
+          avatar_url: null
+        }
+      }));
+
+      console.log(`Loaded ${messagesWithProfiles.length} messages with profiles`);
+      setMessages(messagesWithProfiles as Message[]);
     };
 
     fetchMessages();
@@ -78,35 +108,46 @@ export const useRealtimeRoom = (roomId: string) => {
           filter: `room_id=eq.${roomId}`
         },
         async (payload) => {
-          console.log("New message received:", payload.new);
-          // Fetch the complete message with profile data
-          const { data, error } = await supabase
+          console.log("New message received via realtime:", payload.new);
+          
+          // Fetch the message
+          const { data: messageData, error: messageError } = await supabase
             .from("room_messages")
-            .select(`
-              id,
-              user_id,
-              message,
-              message_type,
-              created_at,
-              file_url,
-              file_name,
-              file_type,
-              file_size,
-              code_language,
-              profiles!inner(
-                full_name,
-                avatar_url
-              )
-            `)
+            .select("*")
             .eq("id", payload.new.id)
             .single();
 
-          if (error) {
-            console.error("Error fetching new message:", error);
-          } else if (data) {
-            console.log("Adding message to chat:", data);
-            setMessages(prev => [...prev, data as unknown as Message]);
+          if (messageError) {
+            console.error("Error fetching new message:", messageError);
+            return;
           }
+
+          if (!messageData) {
+            console.error("Message not found:", payload.new.id);
+            return;
+          }
+
+          // Fetch the user's profile
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("user_id, full_name, avatar_url")
+            .eq("user_id", messageData.user_id)
+            .single();
+
+          if (profileError) {
+            console.error("Error fetching profile:", profileError);
+          }
+
+          const messageWithProfile = {
+            ...messageData,
+            profiles: profileData || {
+              full_name: "Unknown User",
+              avatar_url: null
+            }
+          };
+
+          console.log("Adding message to chat with profile:", messageWithProfile);
+          setMessages(prev => [...prev, messageWithProfile as Message]);
         }
       )
       .subscribe();
@@ -130,28 +171,63 @@ export const useRealtimeRoom = (roomId: string) => {
       .subscribe();
 
     const fetchParticipants = async () => {
-      const { data, error } = await supabase
+      console.log("Fetching participants for room:", roomId);
+      
+      // Fetch participants
+      const { data: participantsData, error: participantsError } = await supabase
         .from("room_participants")
-        .select(`
-          id,
-          user_id,
-          role,
-          is_active,
-          joined_at,
-          profiles!inner(
-            full_name,
-            avatar_url
-          )
-        `)
+        .select("*")
         .eq("room_id", roomId)
         .eq("is_active", true);
 
-      if (error) {
-        console.error("Error fetching participants:", error);
-      } else if (data) {
-        console.log(`Updated participants: ${data.length} active`);
-        setParticipants(data as any[]);
+      if (participantsError) {
+        console.error("Error fetching participants:", participantsError);
+        return;
       }
+
+      if (!participantsData || participantsData.length === 0) {
+        console.log("No active participants found");
+        setParticipants([]);
+        return;
+      }
+
+      console.log(`Fetched ${participantsData.length} participants`);
+
+      // Get unique user IDs
+      const userIds = [...new Set(participantsData.map(p => p.user_id))];
+      
+      // Fetch profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", userIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles for participants:", profilesError);
+      }
+
+      // Create a map
+      const profilesMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.user_id, {
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url
+          });
+        });
+      }
+
+      // Combine
+      const participantsWithProfiles = participantsData.map(p => ({
+        ...p,
+        profiles: profilesMap.get(p.user_id) || {
+          full_name: "Unknown User",
+          avatar_url: null
+        }
+      }));
+
+      console.log(`Updated participants: ${participantsWithProfiles.length} active`);
+      setParticipants(participantsWithProfiles);
     };
 
     fetchParticipants();

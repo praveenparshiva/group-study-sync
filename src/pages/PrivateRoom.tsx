@@ -123,26 +123,61 @@ export default function PrivateRoom() {
   const fetchParticipants = async () => {
     if (!roomId) return;
 
-    const { data, error } = await supabase
+    console.log("Fetching participants (PrivateRoom):", roomId);
+
+    // Fetch participants
+    const { data: participantsData, error: participantsError } = await supabase
       .from("room_participants")
-      .select(`
-        id,
-        user_id,
-        role,
-        profiles!inner(
-          full_name,
-          avatar_url
-        )
-      `)
+      .select("*")
       .eq("room_id", roomId)
       .eq("is_active", true);
 
-    if (error) {
-      console.error("Error fetching participants:", error);
-    } else if (data) {
-      console.log(`Room participants updated: ${data.length} active`);
-      setParticipants(data as unknown as Participant[]);
+    if (participantsError) {
+      console.error("Error fetching participants:", participantsError);
+      return;
     }
+
+    if (!participantsData || participantsData.length === 0) {
+      console.log("No participants found");
+      setParticipants([]);
+      return;
+    }
+
+    // Get unique user IDs
+    const userIds = [...new Set(participantsData.map(p => p.user_id))];
+    
+    // Fetch profiles
+    const { data: profilesData, error: profilesError } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, avatar_url")
+      .in("user_id", userIds);
+
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
+    }
+
+    // Create a map
+    const profilesMap = new Map();
+    if (profilesData) {
+      profilesData.forEach(profile => {
+        profilesMap.set(profile.user_id, {
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url
+        });
+      });
+    }
+
+    // Combine
+    const participantsWithProfiles = participantsData.map(p => ({
+      ...p,
+      profiles: profilesMap.get(p.user_id) || {
+        full_name: "Unknown User",
+        avatar_url: null
+      }
+    }));
+
+    console.log(`Room participants updated: ${participantsWithProfiles.length} active`);
+    setParticipants(participantsWithProfiles as Participant[]);
   };
 
   const handleSendMessage = async (message: string, messageType: string, metadata?: any) => {
