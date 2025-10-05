@@ -46,8 +46,8 @@ export default function PrivateRoom() {
 
   useEffect(() => {
     if (!user) {
-      console.log("No user, redirecting to auth");
-      navigate("/auth");
+      console.log("No user, redirecting to login");
+      navigate("/login");
       return;
     }
 

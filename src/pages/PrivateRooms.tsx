@@ -26,7 +26,7 @@ export default function PrivateRooms() {
 
   useEffect(() => {
     if (!user) {
-      navigate("/auth");
+      navigate("/login");
     }
   }, [user, navigate]);
 
