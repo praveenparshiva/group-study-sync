@@ -24,8 +24,6 @@ import {
   Shield,
   Orbit,
   Keyboard,
-  Zap,
-  Users,
 } from "lucide-react";
 import {
   Dialog,
@@ -39,7 +37,6 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import FloatingScrollButtons from "@/components/FloatingScrollButtons";
 import { GalaxyViewer } from "@/components/GalaxyViewer";
 import { TypeSpeedTestViewer } from "@/components/TypeSpeedTestViewer";
-import { GroupCard } from "@/components/GroupCard";
 
 interface Post {
   id: string;
@@ -58,23 +55,10 @@ interface Post {
   } | null;
 }
 
-interface Group {
-  id: string;
-  title: string;
-  description: string | null;
-  created_at: string;
-  created_by: string | null;
-}
-
-interface GroupWithPosts extends Group {
-  posts: Post[];
-}
-
 const PublicStudentFeed = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [groups, setGroups] = useState<GroupWithPosts[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -96,7 +80,6 @@ const PublicStudentFeed = () => {
 
   const fetchPosts = async () => {
     try {
-      // Fetch all posts
       const { data: postsData, error: postsError } = await supabase
         .from("posts")
         .select("*")
@@ -148,88 +131,10 @@ const PublicStudentFeed = () => {
       } else {
         setPosts([]);
       }
-
-      // Fetch groups and their posts
-      await fetchGroups();
     } catch (error) {
       console.error("Error in fetchPosts:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchGroups = async () => {
-    try {
-      const { data: groupsData, error: groupsError } = await supabase
-        .from('groups')
-        .select(`
-          *,
-          post_groups(
-            position,
-            posts(*)
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (groupsError) {
-        console.error('Error fetching groups:', groupsError);
-        return;
-      }
-
-      // Process groups with their posts
-      const groupsWithPosts = await Promise.all(
-        (groupsData || []).map(async (group) => {
-          // Sort posts by position within each group
-          const sortedGroupPosts = (group.post_groups || [])
-            .sort((a, b) => (a.position || 0) - (b.position || 0))
-            .map(pg => pg.posts)
-            .filter(Boolean);
-          
-          // Get unique user IDs from group posts
-          const userIds = [
-            ...new Set(sortedGroupPosts.map((post: any) => post.user_id).filter(Boolean)),
-          ];
-
-          let profilesData = null;
-          if (userIds.length > 0) {
-            // Fetch profiles for those users
-            const { data: profiles, error: profilesError } = await supabase
-              .from("profiles")
-              .select("user_id, full_name, avatar_url")
-              .in("user_id", userIds);
-
-            if (profilesError) {
-              console.error("Error fetching profiles:", profilesError);
-            } else {
-              profilesData = profiles;
-            }
-          }
-
-          // Combine posts with profiles
-          const postsWithProfiles = sortedGroupPosts.map((post: any) => ({
-            ...post,
-            profiles:
-              post.user_id && profilesData
-                ? profilesData.find(
-                    (profile) => profile.user_id === post.user_id
-                  ) || null
-                : null,
-          })) as Post[];
-
-          return {
-            id: group.id,
-            title: group.title,
-            description: group.description,
-            created_at: group.created_at,
-            created_by: group.created_by,
-            posts: postsWithProfiles
-          };
-        })
-      );
-
-      setGroups(groupsWithPosts);
-    } catch (error) {
-      console.error('Error in fetchGroups:', error);
     }
   };
 
@@ -317,23 +222,7 @@ const PublicStudentFeed = () => {
     }
   };
 
-  // Get posts that are not in any group (ungrouped posts)
-  const groupedPostIds = new Set(
-    groups.flatMap(group => group.posts.map(post => post.id))
-  );
-  const ungroupedPosts = posts.filter(post => !groupedPostIds.has(post.id));
-
-  const filteredGroups = groups.filter(group => 
-    group.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    group.posts.some(post => 
-      post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
-
-  const filteredUngroupedPosts = ungroupedPosts.filter(
+  const filteredPosts = posts.filter(
     (post) =>
       post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -440,78 +329,7 @@ const PublicStudentFeed = () => {
               <Keyboard className="h-4 w-4 mr-2" />
               TypeSpeed
             </Button>
-            <Button
-              onClick={() => navigate("/login")}
-              variant="outline"
-              size="sm"
-              className="flex items-center"
-            >
-              <Shield className="h-4 w-4 mr-2" />
-              Login
-            </Button>
-            
-            {/* Learn More Dialog */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="secondary" size="sm">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Learn More
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>About Campus Connect</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Campus Connect is a comprehensive student collaboration platform designed to enhance your learning experience through community interaction and real-time study tools.
-                  </p>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-3">
-                      <Users className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold">Study Rooms</h4>
-                        <p className="text-sm text-muted-foreground">Create or join virtual study sessions with video chat, collaborative whiteboard, and synchronized Pomodoro timers.</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold">Community Feed</h4>
-                        <p className="text-sm text-muted-foreground">Share posts, code snippets, images, and PDFs with the student community. Get help and collaborate on projects.</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <Code className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold">Interactive Tools</h4>
-                        <p className="text-sm text-muted-foreground">Access integrated tools like the Galaxy Viewer for astronomy, Type Speed Test for improving typing skills, and more educational content.</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <Shield className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold">Admin Features</h4>
-                        <p className="text-sm text-muted-foreground">Administrators can manage content, organize posts into groups, moderate discussions, and oversee study room activities.</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">
-                      Get started by creating a new post to share with the community, or join a study room to collaborate with other students in real-time.
-                    </p>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
             <ThemeToggle />
-            
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button className="hover:bg-primary-hover transition-colors">
@@ -684,34 +502,18 @@ const PublicStudentFeed = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Search */}
         <div className="mb-8">
-          <div className="flex items-center justify-between gap-4">
-            <div className="relative max-w-md flex-1">
-              {/* Gradient animated border wrapper */}
-              <div className="p-[2px] rounded-lg animate-gradient-border bg-[linear-gradient(315deg,#22dfe6_5%,#0022a0_95%)] bg-[length:200%_200%]">
-                <div className="relative bg-background rounded-lg">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search posts..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 rounded-lg border-0 focus:ring-0 focus:outline-none"
-                  />
-                </div>
+          <div className="relative max-w-md">
+            {/* Gradient animated border wrapper */}
+            <div className="p-[2px] rounded-lg animate-gradient-border bg-[linear-gradient(315deg,#22dfe6_5%,#0022a0_95%)] bg-[length:200%_200%]">
+              <div className="relative bg-background rounded-lg">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search posts..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 rounded-lg border-0 focus:ring-0 focus:outline-none"
+                />
               </div>
-            </div>
-            
-            {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              {/* Study Rooms Button */}
-              <Button
-                onClick={() => navigate("/private-rooms")}
-                variant="outline"
-                size="sm"
-                className="flex items-center bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-500/30 hover:border-blue-400/50 hover:bg-gradient-to-r hover:from-blue-800/30 hover:to-indigo-800/30 text-foreground hover:text-blue-200 transition-all duration-300 shadow-lg hover:shadow-blue-500/20"
-              >
-                <Users className="h-4 w-4 mr-2 text-blue-400" />
-                Private Rooms
-              </Button>
             </div>
           </div>
         </div>
@@ -722,7 +524,7 @@ const PublicStudentFeed = () => {
             <div className="text-center py-8">
               <div className="text-muted-foreground">Loading posts...</div>
             </div>
-          ) : filteredGroups.length === 0 && filteredUngroupedPosts.length === 0 ? (
+          ) : filteredPosts.length === 0 ? (
             <div className="text-center py-12">
               <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">
@@ -741,22 +543,9 @@ const PublicStudentFeed = () => {
               )}
             </div>
           ) : (
-            <>
-              {/* Display Groups */}
-              {filteredGroups.map((group) => (
-                <GroupCard 
-                  key={group.id} 
-                  group={group} 
-                  posts={group.posts} 
-                  onPostDeleted={fetchPosts} 
-                />
-              ))}
-              
-              {/* Display Ungrouped Posts */}
-              {filteredUngroupedPosts.map((post) => (
-                <PostCard key={post.id} post={post} onPostDeleted={fetchPosts} />
-              ))}
-            </>
+            filteredPosts.map((post) => (
+              <PostCard key={post.id} post={post} onPostDeleted={fetchPosts} />
+            ))
           )}
         </div>
       </main>
