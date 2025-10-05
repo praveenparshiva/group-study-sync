@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Lock, Plus, LogIn } from "lucide-react";
+import { Lock, Plus, LogIn, ArrowLeft } from "lucide-react";
 
 export default function PrivateRooms() {
   const { user } = useAuth();
@@ -199,6 +199,17 @@ export default function PrivateRooms() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-6">
       <div className="max-w-4xl mx-auto space-y-8">
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard")}
+            className="hover:bg-primary/10"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Private Rooms
