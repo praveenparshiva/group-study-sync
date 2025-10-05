@@ -189,32 +189,8 @@ export default function PrivateRoom() {
     console.log("Sending message:", { messageType, hasMetadata: !!metadata });
 
     try {
-      const messageData: any = {
-        room_id: roomId,
-        user_id: user.id,
-        message: message,
-        message_type: messageType,
-      };
-
-      if (metadata) {
-        if (metadata.file_url) messageData.file_url = metadata.file_url;
-        if (metadata.file_name) messageData.file_name = metadata.file_name;
-        if (metadata.file_type) messageData.file_type = metadata.file_type;
-        if (metadata.file_size) messageData.file_size = metadata.file_size;
-        if (metadata.code_language) messageData.code_language = metadata.code_language;
-      }
-
-      console.log("Inserting message:", messageData);
-
-      const { error } = await supabase
-        .from("room_messages")
-        .insert(messageData);
-
-      if (error) {
-        console.error("Error inserting message:", error);
-        throw error;
-      }
-
+      // Use the optimistic sendMessage from useRealtimeRoom hook
+      await sendMessage(message, messageType, metadata);
       console.log("Message sent successfully");
     } catch (error) {
       console.error("Error sending message:", error);
@@ -223,6 +199,7 @@ export default function PrivateRoom() {
         description: "Failed to send message",
         variant: "destructive",
       });
+      throw error; // Re-throw so PrivateRoomChat can handle it
     }
   };
 

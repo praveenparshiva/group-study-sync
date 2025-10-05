@@ -82,12 +82,19 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim()) {
-      onSendMessage(newMessage, "text");
-      setNewMessage("");
-      inputRef.current?.focus();
+    if (!newMessage.trim()) return;
+
+    const messageText = newMessage;
+    setNewMessage(""); // Clear input immediately for instant UX
+    inputRef.current?.focus();
+
+    try {
+      await onSendMessage(messageText, "text");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setNewMessage(messageText); // Restore message on error
     }
   };
 

@@ -115,11 +115,24 @@ export const useRealtimeRoom = (roomId: string) => {
           
           const newMessage = payload.new as any;
 
-          // Prevent duplicates
+          // Prevent duplicates (check both real IDs and temp IDs)
           setMessages(prev => {
+            // Skip if we already have this real message ID
             if (prev.some(msg => msg.id === newMessage.id)) {
               console.log("⚠️ Duplicate detected, skipping");
               return prev;
+            }
+
+            // Replace temp message if this is from the current user
+            const tempMsgIndex = prev.findIndex(msg => 
+              msg.id.startsWith('temp-') && 
+              msg.user_id === newMessage.user_id &&
+              Math.abs(new Date(msg.created_at).getTime() - new Date(newMessage.created_at).getTime()) < 3000
+            );
+
+            if (tempMsgIndex !== -1) {
+              console.log("🔄 Replacing temp message with real one");
+              return prev; // Already have it from optimistic update
             }
 
             // Fetch profile asynchronously without blocking message display
@@ -260,26 +273,69 @@ export const useRealtimeRoom = (roomId: string) => {
     };
   }, [roomId]);
 
-  const sendMessage = useCallback(async (message: string, messageType: string = 'text') => {
+  const sendMessage = useCallback(async (message: string, messageType: string = 'text', metadata?: any) => {
     if (!user || !roomId || !message.trim()) return;
 
+    // Create optimistic message for instant display
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`, // Temporary ID
+      user_id: user.id,
+      message: message.trim(),
+      message_type: messageType,
+      created_at: new Date().toISOString(),
+      file_url: metadata?.file_url,
+      file_name: metadata?.file_name,
+      file_type: metadata?.file_type,
+      file_size: metadata?.file_size,
+      code_language: metadata?.code_language,
+      profiles: {
+        full_name: "You",
+        avatar_url: null
+      }
+    };
+
+    // Optimistic update - add message immediately for sender
+    setMessages(prev => [...prev, optimisticMessage]);
+    console.log("✅ Optimistic message added:", optimisticMessage.id);
+
     try {
+      const messageData: any = {
+        room_id: roomId,
+        user_id: user.id,
+        message: message.trim(),
+        message_type: messageType
+      };
+
+      if (metadata) {
+        if (metadata.file_url) messageData.file_url = metadata.file_url;
+        if (metadata.file_name) messageData.file_name = metadata.file_name;
+        if (metadata.file_type) messageData.file_type = metadata.file_type;
+        if (metadata.file_size) messageData.file_size = metadata.file_size;
+        if (metadata.code_language) messageData.code_language = metadata.code_language;
+      }
+
       const { data, error } = await supabase
         .from("room_messages")
-        .insert({
-          room_id: roomId,
-          user_id: user.id,
-          message: message.trim(),
-          message_type: messageType
-        })
+        .insert(messageData)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Replace optimistic message with real message
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === optimisticMessage.id 
+            ? { ...data, profiles: optimisticMessage.profiles } as Message
+            : msg
+        )
+      );
       
-      console.log("✅ Message sent successfully:", data?.id);
+      console.log("✅ Message sent successfully, replaced optimistic:", data?.id);
     } catch (error) {
       console.error("❌ Error sending message:", error);
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
       throw error;
     }
   }, [user, roomId]);
