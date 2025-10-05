@@ -40,10 +40,8 @@ export default function PrivateRoom() {
 
   useEffect(() => {
     // Update participants state when realtime participants change
-    if (realtimeParticipants && realtimeParticipants.length > 0) {
-      console.log("Participants updated from realtime:", realtimeParticipants.length);
-      setParticipants(realtimeParticipants);
-    }
+    console.log("Participants updated from hook:", realtimeParticipants.length);
+    setParticipants(realtimeParticipants);
   }, [realtimeParticipants]);
 
   useEffect(() => {
@@ -105,8 +103,6 @@ export default function PrivateRoom() {
         navigate("/private-rooms");
         return;
       }
-
-      await fetchParticipants();
     } catch (error: any) {
       console.error("Error initializing room:", error);
       toast({
@@ -118,66 +114,6 @@ export default function PrivateRoom() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchParticipants = async () => {
-    if (!roomId) return;
-
-    console.log("Fetching participants (PrivateRoom):", roomId);
-
-    // Fetch participants
-    const { data: participantsData, error: participantsError } = await supabase
-      .from("room_participants")
-      .select("*")
-      .eq("room_id", roomId)
-      .eq("is_active", true);
-
-    if (participantsError) {
-      console.error("Error fetching participants:", participantsError);
-      return;
-    }
-
-    if (!participantsData || participantsData.length === 0) {
-      console.log("No participants found");
-      setParticipants([]);
-      return;
-    }
-
-    // Get unique user IDs
-    const userIds = [...new Set(participantsData.map(p => p.user_id))];
-    
-    // Fetch profiles
-    const { data: profilesData, error: profilesError } = await supabase
-      .from("profiles")
-      .select("user_id, full_name, avatar_url")
-      .in("user_id", userIds);
-
-    if (profilesError) {
-      console.error("Error fetching profiles:", profilesError);
-    }
-
-    // Create a map
-    const profilesMap = new Map();
-    if (profilesData) {
-      profilesData.forEach(profile => {
-        profilesMap.set(profile.user_id, {
-          full_name: profile.full_name,
-          avatar_url: profile.avatar_url
-        });
-      });
-    }
-
-    // Combine
-    const participantsWithProfiles = participantsData.map(p => ({
-      ...p,
-      profiles: profilesMap.get(p.user_id) || {
-        full_name: "Unknown User",
-        avatar_url: null
-      }
-    }));
-
-    console.log(`Room participants updated: ${participantsWithProfiles.length} active`);
-    setParticipants(participantsWithProfiles as Participant[]);
   };
 
   const handleSendMessage = async (message: string, messageType: string, metadata?: any) => {
