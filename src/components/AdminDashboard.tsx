@@ -273,34 +273,36 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold text-primary">StudySync</h1>
-              <Badge variant="secondary" className="ml-2">
-                <Shield className="h-3 w-3 mr-1" />
-                Admin
-              </Badge>
+      <header className="border-b border-border/40 bg-card sticky top-0 z-10">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="flex items-center space-x-2">
+                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                <h1 className="text-lg sm:text-2xl font-bold text-primary">StudySync</h1>
+                <Badge variant="secondary" className="text-xs">
+                  <Shield className="h-3 w-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Admin</span>
+                </Badge>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-muted-foreground">
-              {profile?.full_name || profile?.email}
-            </span>
-            <Button variant="outline" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+            <div className="flex items-center justify-between sm:space-x-4">
+              <span className="text-xs sm:text-sm text-muted-foreground truncate max-w-[200px]">
+                {profile?.full_name || profile?.email}
+              </span>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sign Out</span>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -331,12 +333,20 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="posts" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="posts">Manage Posts</TabsTrigger>
-            <TabsTrigger value="rooms">Manage Rooms</TabsTrigger>
-            <TabsTrigger value="groups">Manage Groups</TabsTrigger>
-            <TabsTrigger value="users">Manage Users</TabsTrigger>
+        <Tabs defaultValue="posts" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
+            <TabsTrigger value="posts" className="text-xs sm:text-sm px-2 py-2">
+              <span className="hidden sm:inline">Manage </span>Posts
+            </TabsTrigger>
+            <TabsTrigger value="rooms" className="text-xs sm:text-sm px-2 py-2">
+              <span className="hidden sm:inline">Manage </span>Rooms
+            </TabsTrigger>
+            <TabsTrigger value="groups" className="text-xs sm:text-sm px-2 py-2">
+              <span className="hidden sm:inline">Manage </span>Groups
+            </TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm px-2 py-2">
+              <span className="hidden sm:inline">Manage </span>Users
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="posts" className="space-y-6">

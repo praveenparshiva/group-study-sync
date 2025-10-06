@@ -410,55 +410,56 @@ const PublicStudentFeed = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      <header className="border-b border-border/40 bg-card sticky top-0 z-10">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold text-primary">Chart Room</h1>
+              <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <h1 className="text-lg sm:text-2xl font-bold text-primary">Chart Room</h1>
+              <div className="sm:hidden"><ThemeToggle /></div>
             </div>
-            <div className="hidden md:block text-sm text-muted-foreground">
-              <span>Community Student Hub</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button
-              onClick={() => setGalaxyViewerOpen(true)}
-              variant="outline"
-              size="sm"
-              className="flex items-center"
-            >
-              <Orbit className="h-4 w-4 mr-2" />
-              MilkyWay-Galaxy
-            </Button>
-            <Button
-              onClick={() => setTypeSpeedTestOpen(true)}
-              variant="outline"
-              size="sm"
-              className="flex items-center"
-            >
-              <Keyboard className="h-4 w-4 mr-2" />
-              TypeSpeed
-            </Button>
-            <Button
-              onClick={() => navigate("/login")}
-              variant="outline"
-              size="sm"
-              className="flex items-center"
-            >
-              <Shield className="h-4 w-4 mr-2" />
-              Login
-            </Button>
             
-            {/* Learn More Dialog */}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="secondary" size="sm">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Learn More
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="hidden sm:block"><ThemeToggle /></div>
+              <Button
+                onClick={() => setGalaxyViewerOpen(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center flex-1 sm:flex-none justify-center"
+              >
+                <Orbit className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                <span className="hidden sm:inline">MilkyWay-Galaxy</span>
+                <span className="sm:hidden text-xs">Galaxy</span>
+              </Button>
+              <Button
+                onClick={() => setTypeSpeedTestOpen(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center flex-1 sm:flex-none justify-center"
+              >
+                <Keyboard className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                <span className="hidden sm:inline">TypeSpeed</span>
+                <span className="sm:hidden text-xs">Speed</span>
+              </Button>
+              <Button
+                onClick={() => navigate("/login")}
+                variant="outline"
+                size="sm"
+                className="flex items-center flex-1 sm:flex-none justify-center"
+              >
+                <Shield className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                <span className="text-xs sm:text-sm">Login</span>
+              </Button>
+              
+              {/* Learn More Dialog */}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="secondary" size="sm" className="hidden md:flex">
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Learn More
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>About Campus Connect</DialogTitle>
                 </DialogHeader>
@@ -508,18 +509,16 @@ const PublicStudentFeed = () => {
                   </div>
                 </div>
               </DialogContent>
-            </Dialog>
+              </Dialog>
 
-            <ThemeToggle />
-            
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="hover:bg-primary-hover transition-colors">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Post
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="hover:bg-primary-hover transition-colors flex-1 sm:flex-none">
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                    <span className="text-xs sm:text-sm">New Post</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Create New Post</DialogTitle>
                 </DialogHeader>
@@ -649,18 +648,19 @@ const PublicStudentFeed = () => {
                     />
                   </div>
 
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => setIsCreateOpen(false)}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="hover:bg-primary-hover transition-colors"
+                      className="hover:bg-primary-hover transition-colors w-full sm:w-auto"
                     >
                       {isSubmitting ? "Creating..." : "Create Post"}
                     </Button>
@@ -670,22 +670,24 @@ const PublicStudentFeed = () => {
             </Dialog>
             <Button
               variant="outline"
+              size="sm"
               onClick={() => navigate("/auth")}
-              className="flex items-center"
+              className="flex items-center flex-1 sm:flex-none justify-center"
             >
-              <Shield className="h-4 w-4 mr-2" />
-              Moderator
+              <Shield className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+              <span className="text-xs sm:text-sm">Moderator</span>
             </Button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Search */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between gap-4">
-            <div className="relative max-w-md flex-1">
+        <div className="mb-4 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="relative flex-1 max-w-full sm:max-w-md">
               {/* Gradient animated border wrapper */}
               <div className="p-[2px] rounded-lg animate-gradient-border bg-[linear-gradient(315deg,#22dfe6_5%,#0022a0_95%)] bg-[length:200%_200%]">
                 <div className="relative bg-background rounded-lg">
@@ -701,40 +703,40 @@ const PublicStudentFeed = () => {
             </div>
             
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* Study Rooms Button */}
               <Button
                 onClick={() => navigate("/private-rooms")}
                 variant="outline"
                 size="sm"
-                className="flex items-center bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-500/30 hover:border-blue-400/50 hover:bg-gradient-to-r hover:from-blue-800/30 hover:to-indigo-800/30 text-foreground hover:text-blue-200 transition-all duration-300 shadow-lg hover:shadow-blue-500/20"
+                className="flex items-center bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-500/30 hover:border-blue-400/50 hover:bg-gradient-to-r hover:from-blue-800/30 hover:to-indigo-800/30 text-foreground hover:text-blue-200 transition-all duration-300 shadow-lg hover:shadow-blue-500/20 flex-1 sm:flex-none justify-center"
               >
-                <Users className="h-4 w-4 mr-2 text-blue-400" />
-                Private Rooms
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2 text-blue-400" />
+                <span className="text-xs sm:text-sm">Private Rooms</span>
               </Button>
             </div>
           </div>
         </div>
 
         {/* Posts Feed */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {loading ? (
             <div className="text-center py-8">
-              <div className="text-muted-foreground">Loading posts...</div>
+              <div className="text-muted-foreground text-sm sm:text-base">Loading posts...</div>
             </div>
           ) : filteredGroups.length === 0 && filteredUngroupedPosts.length === 0 ? (
-            <div className="text-center py-12">
-              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="text-center py-8 sm:py-12 px-4">
+              <MessageSquare className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">
                 {searchTerm ? "No posts found" : "No posts yet"}
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-sm sm:text-base text-muted-foreground mb-4">
                 {searchTerm
                   ? "Try a different search term"
                   : "Be the first to share something with the study community!"}
               </p>
               {!searchTerm && (
-                <Button onClick={() => setIsCreateOpen(true)}>
+                <Button onClick={() => setIsCreateOpen(true)} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Create First Post
                 </Button>

@@ -216,7 +216,7 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
             <img
               src={message.file_url}
               alt={message.file_name || "Image"}
-              className="max-w-xs max-h-80 rounded-lg cursor-pointer hover:opacity-90 transition-opacity object-contain"
+              className="max-w-[200px] sm:max-w-xs max-h-60 sm:max-h-80 rounded-lg cursor-pointer hover:opacity-90 transition-opacity object-contain"
               onClick={() => window.open(message.file_url, '_blank')}
               onError={(e) => {
                 console.error("Image load error:", message.file_url);
@@ -260,7 +260,7 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
 
       case "code":
         return (
-          <div className="max-w-2xl">
+          <div className="max-w-[280px] sm:max-w-md md:max-w-2xl overflow-x-auto">
             <div className="text-xs text-muted-foreground mb-1 capitalize">
               {message.code_language || 'code'}
             </div>
@@ -269,8 +269,8 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
               style={vscDarkPlus}
               customStyle={{
                 borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                maxHeight: '400px',
+                fontSize: '0.75rem',
+                maxHeight: '300px',
                 overflow: 'auto',
               }}
               showLineNumbers
@@ -287,29 +287,29 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <div className="border-b p-4">
-        <h3 className="font-semibold">Chat</h3>
+      <div className="border-b p-2 sm:p-4">
+        <h3 className="font-semibold text-sm sm:text-base">Chat</h3>
       </div>
 
-      <ScrollArea ref={scrollRef} className="flex-1 p-4">
-        <div className="space-y-4">
+      <ScrollArea ref={scrollRef} className="flex-1 p-2 sm:p-4">
+        <div className="space-y-3 sm:space-y-4">
           {messages.map((message) => {
             const isOwn = message.user_id === user?.id;
             return (
               <div
                 key={message.id}
-                className={`flex gap-3 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
+                className={`flex gap-2 sm:gap-3 ${isOwn ? "flex-row-reverse" : "flex-row"}`}
               >
-                <Avatar className="w-8 h-8 flex-shrink-0">
+                <Avatar className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0">
                   <AvatarImage src={message.profiles?.avatar_url} />
                   <AvatarFallback>
                     {message.profiles?.full_name?.[0] || "U"}
                   </AvatarFallback>
                 </Avatar>
 
-                <div className={`flex flex-col ${isOwn ? "items-end" : "items-start"} max-w-[70%]`}>
+                <div className={`flex flex-col ${isOwn ? "items-end" : "items-start"} max-w-[85%] sm:max-w-[70%]`}>
                   <div className="flex items-baseline gap-2 mb-1">
-                    <span className="text-sm font-medium">
+                    <span className="text-xs sm:text-sm font-medium">
                       {isOwn ? "You" : message.profiles?.full_name}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -318,7 +318,7 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
                   </div>
 
                   <div
-                    className={`rounded-lg p-3 ${
+                    className={`rounded-lg p-2 sm:p-3 text-sm sm:text-base ${
                       isOwn
                         ? "bg-primary text-primary-foreground"
                         : "bg-secondary text-secondary-foreground"
@@ -333,8 +333,8 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
         </div>
       </ScrollArea>
 
-      <div className="border-t p-4">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+      <div className="border-t p-2 sm:p-4">
+        <form onSubmit={handleSubmit} className="flex gap-1 sm:gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -342,6 +342,7 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
                 size="icon"
                 variant="outline"
                 disabled={uploading}
+                className="shrink-0"
               >
                 <Paperclip className="w-4 h-4" />
               </Button>
@@ -370,9 +371,10 @@ export default function PrivateRoomChat({ roomId, messages, onSendMessage }: Pri
             placeholder="Type a message..."
             maxLength={1000}
             disabled={uploading}
+            className="text-sm sm:text-base"
           />
 
-          <Button type="submit" size="icon" disabled={uploading}>
+          <Button type="submit" size="icon" disabled={uploading} className="shrink-0">
             <Send className="w-4 h-4" />
           </Button>
 

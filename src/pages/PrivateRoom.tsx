@@ -190,20 +190,21 @@ export default function PrivateRoom() {
     <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate("/private-rooms")}
+                className="shrink-0"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold">{room.name}</h1>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold truncate">{room.name}</h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="font-mono">
+                  <Badge variant="secondary" className="font-mono text-xs">
                     {room.room_code}
                   </Badge>
                   <Button
@@ -218,16 +219,16 @@ export default function PrivateRoom() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   {participants.length} participant{participants.length !== 1 ? 's' : ''}
                 </span>
               </div>
-              <Button variant="outline" onClick={leaveRoom}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Leave Room
+              <Button variant="outline" size="sm" onClick={leaveRoom} className="shrink-0">
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Leave Room</span>
               </Button>
             </div>
           </div>
@@ -235,40 +236,42 @@ export default function PrivateRoom() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 container mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Chat Area */}
-        <div className="lg:col-span-3 border rounded-lg overflow-hidden h-[calc(100vh-200px)]">
-          <PrivateRoomChat
-            roomId={roomId!}
-            messages={messages}
-            onSendMessage={handleSendMessage}
-          />
-        </div>
+      <div className="flex-1 container mx-auto px-2 sm:px-4 py-3 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 sm:gap-6 h-[calc(100vh-140px)] sm:h-[calc(100vh-200px)]">
+          {/* Chat Area */}
+          <div className="lg:col-span-3 border rounded-lg overflow-hidden h-full">
+            <PrivateRoomChat
+              roomId={roomId!}
+              messages={messages}
+              onSendMessage={handleSendMessage}
+            />
+          </div>
 
-        {/* Participants Sidebar */}
-        <div className="border rounded-lg p-4 h-fit">
-          <h3 className="font-semibold mb-4">Participants</h3>
-          <div className="space-y-3">
-            {participants.map((participant) => (
-              <div key={participant.id} className="flex items-center gap-3">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src={participant.profiles?.avatar_url} />
-                  <AvatarFallback>
-                    {participant.profiles?.full_name?.[0] || "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">
-                    {participant.profiles?.full_name}
-                  </p>
-                  {participant.role === "host" && (
-                    <Badge variant="secondary" className="text-xs">
-                      Host
-                    </Badge>
-                  )}
+          {/* Participants Sidebar */}
+          <div className="border rounded-lg p-3 sm:p-4 h-fit max-h-[300px] lg:max-h-full overflow-y-auto">
+            <h3 className="font-semibold mb-3 sm:mb-4 text-sm sm:text-base">Participants</h3>
+            <div className="space-y-2 sm:space-y-3">
+              {participants.map((participant) => (
+                <div key={participant.id} className="flex items-center gap-2 sm:gap-3">
+                  <Avatar className="w-7 h-7 sm:w-8 sm:h-8 shrink-0">
+                    <AvatarImage src={participant.profiles?.avatar_url} />
+                    <AvatarFallback>
+                      {participant.profiles?.full_name?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm font-medium truncate">
+                      {participant.profiles?.full_name}
+                    </p>
+                    {participant.role === "host" && (
+                      <Badge variant="secondary" className="text-xs">
+                        Host
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>

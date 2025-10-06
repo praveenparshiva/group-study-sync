@@ -266,16 +266,16 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
 
   if (!expanded) {
     return (
-      <div className="flex items-center gap-3 bg-card/90 backdrop-blur-sm px-4 py-3 rounded-xl border border-border shadow-sm hover:shadow-md transition-all">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 bg-card/90 backdrop-blur-sm px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-border shadow-sm hover:shadow-md transition-all">
+        <div className="flex items-center gap-2 sm:gap-3">
           {isBreak ? (
             <div className="flex items-center gap-2">
-              <Coffee className="w-4 h-4 text-orange-500" />
+              <Coffee className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500" />
               <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Timer className="w-4 h-4 text-primary" />
+              <Timer className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
               {session && session.status === 'running' && (
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               )}
@@ -283,7 +283,7 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
           )}
           
           <div className="text-center">
-            <span className="text-sm font-mono font-bold">
+            <span className="text-xs sm:text-sm font-mono font-bold">
               {session && session.status === 'running' ? formatTime(timeLeft) : '--:--'}
             </span>
             {session && (
@@ -296,17 +296,17 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
 
         <div className="flex gap-1">
           {!session || session.status === 'stopped' || session.status === 'paused' ? (
-            <Button onClick={startTimer} size="sm" variant="outline" className="rounded-full">
+            <Button onClick={startTimer} size="sm" variant="outline" className="rounded-full h-7 w-7 p-0">
               <Play className="w-3 h-3" />
             </Button>
           ) : (
-            <Button onClick={pauseTimer} size="sm" variant="outline" className="rounded-full">
+            <Button onClick={pauseTimer} size="sm" variant="outline" className="rounded-full h-7 w-7 p-0">
               <Pause className="w-3 h-3" />
             </Button>
           )}
           
           {session && session.status !== 'stopped' && (
-            <Button onClick={stopTimer} size="sm" variant="outline" className="rounded-full">
+            <Button onClick={stopTimer} size="sm" variant="outline" className="rounded-full h-7 w-7 p-0">
               <Square className="w-3 h-3" />
             </Button>
           )}
@@ -316,19 +316,19 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
   }
 
   return (
-    <div className="space-y-6 bg-background rounded-xl border border-border p-6 shadow-sm">
+    <div className="space-y-4 sm:space-y-6 bg-background rounded-xl border border-border p-4 sm:p-6 shadow-sm">
       <div className="text-center">
-        <div className="relative w-40 h-40 mx-auto mb-6">
+        <div className="relative w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-4 sm:mb-6">
           <Progress 
             value={getProgress()} 
-            className="h-40 w-40 rounded-full [&>div]:rounded-full"
+            className="h-32 w-32 sm:h-40 sm:w-40 rounded-full [&>div]:rounded-full"
           />
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-3xl font-mono font-bold mb-1">
+              <div className="text-2xl sm:text-3xl font-mono font-bold mb-1">
                 {session && session.status === 'running' ? formatTime(timeLeft) : '--:--'}
               </div>
-              <div className="text-sm text-muted-foreground font-medium">
+              <div className="text-xs sm:text-sm text-muted-foreground font-medium">
                 {isBreak ? 'Break Time' : 'Focus Time'}
               </div>
               {session && session.status === 'running' && (
@@ -339,8 +339,8 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
         </div>
         
         {session && (
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Timer className="w-4 h-4" />
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
+            <Timer className="w-3 h-3 sm:w-4 sm:h-4" />
             <span>Cycle {session.current_cycle}</span>
             <span>•</span>
             <span>{isBreak ? 'Break Session' : 'Focus Session'}</span>
@@ -348,34 +348,34 @@ export const PomodoroTimer = ({ roomId, expanded = false }: PomodoroTimerProps) 
         )}
       </div>
 
-      <div className="flex justify-center gap-3">
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
         {!session || session.status === 'stopped' || session.status === 'paused' ? (
-          <Button onClick={startTimer} className="flex items-center gap-2 rounded-xl px-6 hover:scale-105 transition-transform">
-            <Play className="w-4 h-4" />
-            Start
+          <Button onClick={startTimer} size="sm" className="flex items-center gap-2 rounded-xl px-4 sm:px-6 hover:scale-105 transition-transform">
+            <Play className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">Start</span>
           </Button>
         ) : (
-          <Button onClick={pauseTimer} variant="secondary" className="flex items-center gap-2 rounded-xl px-6 hover:scale-105 transition-transform">
-            <Pause className="w-4 h-4" />
-            Pause
+          <Button onClick={pauseTimer} size="sm" variant="secondary" className="flex items-center gap-2 rounded-xl px-4 sm:px-6 hover:scale-105 transition-transform">
+            <Pause className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">Pause</span>
           </Button>
         )}
         
-        <Button onClick={stopTimer} variant="outline" className="flex items-center gap-2 rounded-xl px-6 hover:scale-105 transition-transform">
-          <Square className="w-4 h-4" />
-          Stop
+        <Button onClick={stopTimer} size="sm" variant="outline" className="flex items-center gap-2 rounded-xl px-4 sm:px-6 hover:scale-105 transition-transform">
+          <Square className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm">Stop</span>
         </Button>
         
-        <Button onClick={resetSession} variant="outline" className="flex items-center gap-2 rounded-xl px-6 hover:scale-105 transition-transform">
-          <RotateCcw className="w-4 h-4" />
-          Reset
+        <Button onClick={resetSession} size="sm" variant="outline" className="flex items-center gap-2 rounded-xl px-4 sm:px-6 hover:scale-105 transition-transform">
+          <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span className="text-xs sm:text-sm">Reset</span>
         </Button>
       </div>
 
       {(!session || session.status === 'stopped') && (
-        <div className="space-y-4 border-t border-border pt-6">
-          <h4 className="font-semibold text-center">Timer Settings</h4>
-          <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-4 border-t border-border pt-4 sm:pt-6">
+          <h4 className="font-semibold text-center text-sm sm:text-base">Timer Settings</h4>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div>
               <Label htmlFor="duration" className="text-sm font-medium">Focus Duration (min)</Label>
               <Input

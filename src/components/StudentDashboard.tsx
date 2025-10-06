@@ -186,170 +186,182 @@ const StudentDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/40 bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="h-8 w-8 text-primary" />
-              <h1 className="text-2xl font-bold text-primary">StudySync</h1>
+      <header className="border-b border-border/40 bg-card sticky top-0 z-10">
+        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center justify-between sm:space-x-4">
+              <div className="flex items-center space-x-2">
+                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+                <h1 className="text-xl sm:text-2xl font-bold text-primary">StudySync</h1>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={signOut}
+                className="sm:hidden"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
-            <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
-              <span>Welcome back,</span>
-              <span className="font-medium text-foreground">
-                {profile?.full_name || profile?.email}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="hover:bg-primary-hover transition-colors">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Post
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Create New Post</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleCreatePost} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="post-type">Post Type</Label>
-                    <Select value={postType} onValueChange={(value: any) => setPostType(value)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">
-                          <div className="flex items-center">
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Text Post
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="code">
-                          <div className="flex items-center">
-                            <Code className="h-4 w-4 mr-2" />
-                            Code Snippet
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="image">
-                          <div className="flex items-center">
-                            <Image className="h-4 w-4 mr-2" />
-                            Image Upload
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="pdf">
-                          <div className="flex items-center">
-                            <FileText className="h-4 w-4 mr-2" />
-                            PDF Document
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Title (Optional)</Label>
-                    <Input
-                      id="title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Give your post a title..."
-                    />
-                  </div>
-
-                  {postType === 'code' && (
+            
+            <div className="flex items-center gap-2 sm:space-x-4">
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="hover:bg-primary-hover transition-colors flex-1 sm:flex-none">
+                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">New Post</span>
+                    <span className="sm:hidden">Post</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Create New Post</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleCreatePost} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="language">Programming Language</Label>
-                      <Select value={codeLanguage} onValueChange={setCodeLanguage}>
+                      <Label htmlFor="post-type">Post Type</Label>
+                      <Select value={postType} onValueChange={(value: any) => setPostType(value)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select language..." />
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {codeLanguages.map((lang) => (
-                            <SelectItem key={lang} value={lang}>
-                              {lang.charAt(0).toUpperCase() + lang.slice(1)}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="text">
+                            <div className="flex items-center">
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Text Post
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="code">
+                            <div className="flex items-center">
+                              <Code className="h-4 w-4 mr-2" />
+                              Code Snippet
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="image">
+                            <div className="flex items-center">
+                              <Image className="h-4 w-4 mr-2" />
+                              Image Upload
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="pdf">
+                            <div className="flex items-center">
+                              <FileText className="h-4 w-4 mr-2" />
+                              PDF Document
+                            </div>
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
 
-                  {(postType === 'image' || postType === 'pdf') && (
                     <div className="space-y-2">
-                      <Label htmlFor="file">
-                        {postType === 'image' ? 'Select Image' : 'Select PDF Document'}
-                      </Label>
+                      <Label htmlFor="title">Title (Optional)</Label>
                       <Input
-                        id="file"
-                        type="file"
-                        accept={postType === 'image' ? 'image/*' : '.pdf'}
-                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                        required
+                        id="title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Give your post a title..."
                       />
-                      {selectedFile && (
-                        <p className="text-sm text-muted-foreground">
-                          Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                        </p>
-                      )}
                     </div>
-                  )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="content">
-                      {(postType === 'image' || postType === 'pdf') ? 'Description (Optional)' : 'Content'}
-                    </Label>
-                    <Textarea
-                      id="content"
-                      value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder={
-                        postType === 'code' 
-                          ? "Paste your code here..." 
-                          : postType === 'image'
-                          ? "Add a description for your image..."
-                          : postType === 'pdf' 
-                          ? "Add a description for your document..."
-                          : "Share your thoughts, questions, or study notes..."
-                      }
-                      rows={postType === 'code' ? 10 : 6}
-                      required={postType === 'text' || postType === 'code'}
-                    />
-                  </div>
+                    {postType === 'code' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="language">Programming Language</Label>
+                        <Select value={codeLanguage} onValueChange={setCodeLanguage}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select language..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {codeLanguages.map((lang) => (
+                              <SelectItem key={lang} value={lang}>
+                                {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
 
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsCreateOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="hover:bg-primary-hover transition-colors"
-                    >
-                      {isSubmitting ? "Creating..." : "Create Post"}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-            <Button variant="outline" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
+                    {(postType === 'image' || postType === 'pdf') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="file">
+                          {postType === 'image' ? 'Select Image' : 'Select PDF Document'}
+                        </Label>
+                        <Input
+                          id="file"
+                          type="file"
+                          accept={postType === 'image' ? 'image/*' : '.pdf'}
+                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                          required
+                        />
+                        {selectedFile && (
+                          <p className="text-sm text-muted-foreground">
+                            Selected: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="content">
+                        {(postType === 'image' || postType === 'pdf') ? 'Description (Optional)' : 'Content'}
+                      </Label>
+                      <Textarea
+                        id="content"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        placeholder={
+                          postType === 'code' 
+                            ? "Paste your code here..." 
+                            : postType === 'image'
+                            ? "Add a description for your image..."
+                            : postType === 'pdf' 
+                            ? "Add a description for your document..."
+                            : "Share your thoughts, questions, or study notes..."
+                        }
+                        rows={postType === 'code' ? 10 : 6}
+                        required={postType === 'text' || postType === 'code'}
+                      />
+                    </div>
+
+                    <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsCreateOpen(false)}
+                        className="w-full sm:w-auto"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="hover:bg-primary-hover transition-colors w-full sm:w-auto"
+                      >
+                        {isSubmitting ? "Creating..." : "Create Post"}
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={signOut}
+                className="hidden sm:flex"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Search */}
-        <div className="mb-8">
-          <div className="relative max-w-md">
+        <div className="mb-4 sm:mb-8">
+          <div className="relative max-w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search posts..."
@@ -361,25 +373,25 @@ const StudentDashboard = () => {
         </div>
 
         {/* Posts Feed */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {loading ? (
             <div className="text-center py-8">
-              <div className="text-muted-foreground">Loading posts...</div>
+              <div className="text-muted-foreground text-sm sm:text-base">Loading posts...</div>
             </div>
           ) : filteredPosts.length === 0 ? (
-            <div className="text-center py-12">
-              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
+            <div className="text-center py-8 sm:py-12 px-4">
+              <MessageSquare className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">
                 {searchTerm ? "No posts found" : "No posts yet"}
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-sm sm:text-base text-muted-foreground mb-4">
                 {searchTerm 
                   ? "Try a different search term" 
                   : "Be the first to share something with your study community!"
                 }
               </p>
               {!searchTerm && (
-                <Button onClick={() => setIsCreateOpen(true)}>
+                <Button onClick={() => setIsCreateOpen(true)} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Create First Post
                 </Button>

@@ -197,9 +197,9 @@ export default function PrivateRooms() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
           <Button
             variant="ghost"
             size="icon"
@@ -210,11 +210,11 @@ export default function PrivateRooms() {
           </Button>
         </div>
 
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <div className="text-center space-y-2 px-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Private Rooms
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Create or join secure private rooms with password protection
           </p>
         </div>
