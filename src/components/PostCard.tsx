@@ -108,14 +108,14 @@ const PostCard = ({ post }: PostCardProps) => {
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-sm sm:text-base truncate">
+                <span className="font-semibold text-sm sm:text-base break-words">
                   {post.profiles?.full_name || 'Anonymous'}
                 </span>
                 {getPostTypeBadge(post.post_type)}
               </div>
               <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mt-1 flex-wrap">
                 <Calendar className="h-3 w-3 shrink-0" />
-                <span className="truncate">{formatDate(post.created_at)}</span>
+                <span className="break-words">{formatDate(post.created_at)}</span>
                 {post.code_language && (
                   <>
                     <span>•</span>
@@ -129,7 +129,7 @@ const PostCard = ({ post }: PostCardProps) => {
           </div>
         </div>
         {post.title && (
-          <h3 className="text-base sm:text-lg font-semibold mt-3">{post.title}</h3>
+          <h3 className="text-base sm:text-lg font-semibold mt-3 break-words">{post.title}</h3>
         )}
       </CardHeader>
       <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
@@ -178,7 +178,7 @@ const PostCard = ({ post }: PostCardProps) => {
               />
             </div>
             {post.content && (
-              <div className="prose prose-sm max-w-none dark:prose-invert text-sm sm:text-base">
+              <div className="prose prose-sm max-w-none dark:prose-invert text-sm sm:text-base break-words">
                 <LinkifiedText>{post.content}</LinkifiedText>
               </div>
             )}
@@ -191,7 +191,7 @@ const PostCard = ({ post }: PostCardProps) => {
                   <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm sm:text-base truncate">{post.file_name}</p>
+                  <p className="font-medium text-sm sm:text-base break-words">{post.file_name}</p>
                   {post.file_size && (
                     <p className="text-xs sm:text-sm text-muted-foreground">
                       {(post.file_size / 1024 / 1024).toFixed(2)} MB
@@ -210,13 +210,13 @@ const PostCard = ({ post }: PostCardProps) => {
               </a>
             </div>
             {post.content && (
-              <div className="prose prose-sm max-w-none dark:prose-invert text-sm sm:text-base">
+              <div className="prose prose-sm max-w-none dark:prose-invert text-sm sm:text-base break-words">
                 <LinkifiedText>{post.content}</LinkifiedText>
               </div>
             )}
           </div>
         ) : (
-          <div className="prose prose-sm max-w-none dark:prose-invert text-sm sm:text-base">
+          <div className="prose prose-sm max-w-none dark:prose-invert text-sm sm:text-base break-words">
             <LinkifiedText>{post.content}</LinkifiedText>
           </div>
         )}
