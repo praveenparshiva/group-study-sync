@@ -197,7 +197,7 @@ export default function PrivateRooms() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 p-4 sm:p-6 overflow-x-hidden w-full">
       <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <Button

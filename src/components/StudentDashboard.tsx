@@ -184,10 +184,10 @@ const StudentDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden w-full">
       {/* Header */}
       <header className="border-b border-border/40 bg-card sticky top-0 z-10">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4">
+        <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center justify-between sm:space-x-4">
               <div className="flex items-center space-x-2">
@@ -358,7 +358,7 @@ const StudentDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <main className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Search */}
         <div className="mb-4 sm:mb-8">
           <div className="relative max-w-full sm:max-w-md">

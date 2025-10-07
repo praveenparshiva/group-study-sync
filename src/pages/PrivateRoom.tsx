@@ -187,10 +187,10 @@ export default function PrivateRoom() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full">
       {/* Header */}
       <header className="border-b bg-card">
-        <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+        <div className="w-full max-w-[1600px] mx-auto px-2 sm:px-4 py-3 sm:py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2 sm:gap-4">
               <Button
