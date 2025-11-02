@@ -77,6 +77,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Fetch user profile after successful authentication
           setTimeout(async () => {
             const profileData = await fetchProfile(session.user.id);
+            
+            // Check if user is banned
+            if (profileData && profileData.is_banned) {
+              await supabase.auth.signOut();
+              setUser(null);
+              setSession(null);
+              setProfile(null);
+              toast({
+                title: "Access Denied",
+                description: "Your account has been banned. Please contact support.",
+                variant: "destructive",
+              });
+              return;
+            }
+            
             setProfile(profileData);
           }, 0);
         } else {
@@ -95,6 +110,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (session?.user) {
         setTimeout(async () => {
           const profileData = await fetchProfile(session.user.id);
+          
+          // Check if user is banned
+          if (profileData && profileData.is_banned) {
+            await supabase.auth.signOut();
+            setUser(null);
+            setSession(null);
+            setProfile(null);
+            toast({
+              title: "Access Denied",
+              description: "Your account has been banned. Please contact support.",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+          
           setProfile(profileData);
           setLoading(false);
         }, 0);
@@ -104,7 +135,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [toast]);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
