@@ -470,41 +470,76 @@ const PublicStudentFeed = () => {
                   
                   <div className="space-y-3">
                     <div className="flex items-start space-x-3">
-                      <Users className="h-5 w-5 text-primary mt-0.5" />
+                      <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <h4 className="font-semibold">Study Rooms</h4>
-                        <p className="text-sm text-muted-foreground">Create or join virtual study sessions with video chat, collaborative whiteboard, and synchronized Pomodoro timers.</p>
+                        <h4 className="font-semibold">Public Community Feed</h4>
+                        <p className="text-sm text-muted-foreground">Share posts, code snippets, images, and PDFs anonymously or as a registered user. No login required to view and post content.</p>
                       </div>
                     </div>
                     
                     <div className="flex items-start space-x-3">
-                      <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
+                      <Users className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <h4 className="font-semibold">Community Feed</h4>
-                        <p className="text-sm text-muted-foreground">Share posts, code snippets, images, and PDFs with the student community. Get help and collaborate on projects.</p>
+                        <h4 className="font-semibold">Private Study Rooms</h4>
+                        <p className="text-sm text-muted-foreground">Create secure study rooms with real-time chat, synchronized Pomodoro timers, and member management. Perfect for group study sessions.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <Zap className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold">Pomodoro Timer</h4>
+                        <p className="text-sm text-muted-foreground">Integrated focus timer with customizable work/break intervals. Track your study sessions and maintain productivity in private rooms.</p>
                       </div>
                     </div>
                     
                     <div className="flex items-start space-x-3">
                       <Code className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <h4 className="font-semibold">Interactive Tools</h4>
-                        <p className="text-sm text-muted-foreground">Access integrated tools like the Galaxy Viewer for astronomy, Type Speed Test for improving typing skills, and more educational content.</p>
+                        <h4 className="font-semibold">Code Sharing & Syntax Highlighting</h4>
+                        <p className="text-sm text-muted-foreground">Share code snippets with syntax highlighting for 15+ languages including JavaScript, Python, Java, C++, and more.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <FileText className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold">File & Media Sharing</h4>
+                        <p className="text-sm text-muted-foreground">Upload and share images, PDFs, and study materials. Organized group management to categorize and curate content.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <Orbit className="h-5 w-5 text-primary mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold">Interactive Learning Tools</h4>
+                        <p className="text-sm text-muted-foreground">Access MilkyWay Galaxy Viewer for astronomy exploration and TypeSpeed Test to improve your typing skills.</p>
                       </div>
                     </div>
                     
                     <div className="flex items-start space-x-3">
                       <Shield className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <h4 className="font-semibold">Admin Features</h4>
-                        <p className="text-sm text-muted-foreground">Administrators can manage content, organize posts into groups, moderate discussions, and oversee study room activities.</p>
+                        <h4 className="font-semibold">Admin Tools & User Management</h4>
+                        <p className="text-sm text-muted-foreground">Advanced admin dashboard with user ban system, content moderation, room management, and post organization into curated groups.</p>
                       </div>
                     </div>
                   </div>
                   
                   <div className="pt-4 border-t">
+                    <h4 className="font-semibold mb-2">Key Features:</h4>
+                    <ul className="space-y-1 text-sm text-muted-foreground">
+                      <li>• <span className="font-medium">Real-time Chat</span> - Instant messaging in private study rooms</li>
+                      <li>• <span className="font-medium">Admin Ban System</span> - Comprehensive user moderation and access control</li>
+                      <li>• <span className="font-medium">Theme Support</span> - Dark and light mode for comfortable studying</li>
+                      <li>• <span className="font-medium">Anonymous Posting</span> - Share without creating an account</li>
+                      <li>• <span className="font-medium">Responsive Design</span> - Works seamlessly on desktop, tablet, and mobile</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="pt-4 border-t">
                     <p className="text-sm text-muted-foreground">
-                      Get started by creating a new post to share with the community, or join a study room to collaborate with other students in real-time.
+                      Get started by creating a new post to share with the community, or login to access private study rooms and advanced features.
                     </p>
                   </div>
                 </div>
