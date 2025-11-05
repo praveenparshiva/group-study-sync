@@ -34,6 +34,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import FloatingScrollButtons from "@/components/FloatingScrollButtons";
@@ -459,7 +460,8 @@ const PublicStudentFeed = () => {
                     Learn More
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh]">
+                  <ScrollArea className="h-[calc(90vh-8rem)] pr-4">
                 <DialogHeader>
                   <DialogTitle>About Campus Connect</DialogTitle>
                 </DialogHeader>
@@ -481,15 +483,7 @@ const PublicStudentFeed = () => {
                       <Users className="h-5 w-5 text-primary mt-0.5" />
                       <div>
                         <h4 className="font-semibold">Private Study Rooms</h4>
-                        <p className="text-sm text-muted-foreground">Create secure study rooms with real-time chat, synchronized Pomodoro timers, and member management. Perfect for group study sessions.</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-3">
-                      <Zap className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold">Pomodoro Timer</h4>
-                        <p className="text-sm text-muted-foreground">Integrated focus timer with customizable work/break intervals. Track your study sessions and maintain productivity in private rooms.</p>
+                        <p className="text-sm text-muted-foreground">Create secure study rooms with real-time chat and member management. Perfect for group study sessions and collaborative learning.</p>
                       </div>
                     </div>
                     
@@ -543,6 +537,7 @@ const PublicStudentFeed = () => {
                     </p>
                   </div>
                 </div>
+                </ScrollArea>
               </DialogContent>
               </Dialog>
 
