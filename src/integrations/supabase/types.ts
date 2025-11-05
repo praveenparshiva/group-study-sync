@@ -38,62 +38,6 @@ export type Database = {
         }
         Relationships: []
       }
-      kv_store_7adb2e52: {
-        Row: {
-          key: string
-          value: Json
-        }
-        Insert: {
-          key: string
-          value: Json
-        }
-        Update: {
-          key?: string
-          value?: Json
-        }
-        Relationships: []
-      }
-      pomodoro_sessions: {
-        Row: {
-          break_duration: number
-          created_at: string
-          current_cycle: number
-          duration: number
-          id: string
-          room_id: string
-          started_at: string | null
-          status: string
-        }
-        Insert: {
-          break_duration?: number
-          created_at?: string
-          current_cycle?: number
-          duration?: number
-          id?: string
-          room_id: string
-          started_at?: string | null
-          status?: string
-        }
-        Update: {
-          break_duration?: number
-          created_at?: string
-          current_cycle?: number
-          duration?: number
-          id?: string
-          room_id?: string
-          started_at?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pomodoro_sessions_room_id_fkey"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "study_rooms"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       post_groups: {
         Row: {
           created_at: string
@@ -344,41 +288,6 @@ export type Database = {
         }
         Relationships: []
       }
-      whiteboard_data: {
-        Row: {
-          created_at: string
-          created_by: string
-          drawing_data: Json
-          id: string
-          room_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          drawing_data: Json
-          id?: string
-          room_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          drawing_data?: Json
-          id?: string
-          room_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whiteboard_data_room_id_fkey"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "study_rooms"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -392,10 +301,7 @@ export type Database = {
         Args: { room_uuid: string; user_uuid: string }
         Returns: boolean
       }
-      is_user_banned: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
+      is_user_banned: { Args: { user_uuid: string }; Returns: boolean }
     }
     Enums: {
       app_role: "student" | "admin"

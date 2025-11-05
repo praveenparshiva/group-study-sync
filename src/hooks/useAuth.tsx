@@ -59,6 +59,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.error('Error fetching profile:', error);
         return null;
       }
+      
+      // Check if user is banned
+      if (data && data.is_banned) {
+        await supabase.auth.signOut();
+        toast({
+          title: "Access Denied",
+          description: "Your account has been banned. Please contact support.",
+          variant: "destructive",
+        });
+        return null;
+      }
+      
       return data;
     } catch (error) {
       console.error('Error in fetchProfile:', error);

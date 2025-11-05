@@ -13,7 +13,9 @@ import {
   Trash2, 
   BookOpen,
   LogOut,
-  Clock
+  Clock,
+  Ban,
+  UserCheck
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GroupManagement } from "@/components/GroupManagement";
@@ -52,6 +54,7 @@ interface UserProfile {
   email: string;
   full_name: string | null;
   role: 'student' | 'admin';
+  is_banned: boolean;
   created_at: string;
 }
 
@@ -255,6 +258,35 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Error updating user role:', error);
+    }
+  };
+
+  const handleToggleBan = async (userId: string, currentBanStatus: boolean) => {
+    const newBanStatus = !currentBanStatus;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_banned: newBanStatus })
+        .eq('user_id', userId);
+
+      if (error) {
+        toast({
+          title: "Error updating ban status",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: newBanStatus ? "User banned" : "User unbanned",
+          description: newBanStatus 
+            ? "User has been banned and will be logged out." 
+            : "User ban has been lifted.",
+        });
+        fetchUsers();
+      }
+    } catch (error) {
+      console.error('Error toggling ban status:', error);
     }
   };
 
@@ -499,6 +531,11 @@ const AdminDashboard = () => {
                             <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
                               {user.role}
                             </Badge>
+                            {user.is_banned && (
+                              <Badge variant="destructive">
+                                Banned
+                              </Badge>
+                            )}
                             <span className="text-xs text-muted-foreground">
                               Joined {new Date(user.created_at).toLocaleDateString()}
                             </span>
@@ -513,6 +550,49 @@ const AdminDashboard = () => {
                         >
                           {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
                         </Button>
+                        
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant={user.is_banned ? "default" : "destructive"}
+                              size="sm"
+                            >
+                              {user.is_banned ? (
+                                <>
+                                  <UserCheck className="h-4 w-4 mr-2" />
+                                  Unban
+                                </>
+                              ) : (
+                                <>
+                                  <Ban className="h-4 w-4 mr-2" />
+                                  Ban
+                                </>
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                {user.is_banned ? 'Unban User' : 'Ban User'}
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {user.is_banned 
+                                  ? `Are you sure you want to unban ${user.full_name || user.email}? They will be able to access the platform again.`
+                                  : `Are you sure you want to ban ${user.full_name || user.email}? They will be immediately logged out and won't be able to access the platform.`
+                                }
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleToggleBan(user.user_id, user.is_banned)}
+                                className={user.is_banned ? "" : "bg-destructive hover:bg-destructive/90"}
+                              >
+                                {user.is_banned ? 'Unban User' : 'Ban User'}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </CardContent>
