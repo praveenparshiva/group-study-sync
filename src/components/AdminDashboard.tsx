@@ -63,12 +63,10 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalPosts: 0,
-    totalRooms: 0,
   });
 
   const fetchPosts = async () => {
@@ -136,34 +134,10 @@ const AdminDashboard = () => {
     }
   };
 
-  const fetchRooms = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('study_rooms')
-        .select(`
-          *,
-          profiles:created_by(full_name, email),
-          room_participants!inner(user_id, is_active)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching rooms:', error);
-      } else {
-        const roomsWithCounts = (data || []).map(room => ({
-          ...room,
-          participant_count: room.room_participants?.filter((p: any) => p.is_active).length || 0
-        }));
-        setRooms(roomsWithCounts);
-      }
-    } catch (error) {
-      console.error('Error in fetchRooms:', error);
-    }
-  };
 
   useEffect(() => {
     const fetchData = async () => {
-      await Promise.all([fetchPosts(), fetchUsers(), fetchRooms()]);
+      await Promise.all([fetchPosts(), fetchUsers()]);
       setLoading(false);
     };
     fetchData();
@@ -173,9 +147,8 @@ const AdminDashboard = () => {
     setStats({
       totalUsers: users.length,
       totalPosts: posts.length,
-      totalRooms: rooms.length,
     });
-  }, [users, posts, rooms]);
+  }, [users, posts]);
 
   const handleDeletePost = async (postId: string) => {
     try {
@@ -202,37 +175,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDeleteRoom = async (roomId: string) => {
-    try {
-      // First remove all participants
-      await supabase
-        .from('room_participants')
-        .delete()
-        .eq('room_id', roomId);
-
-      // Then delete the room
-      const { error } = await supabase
-        .from('study_rooms')
-        .delete()
-        .eq('id', roomId);
-
-      if (error) {
-        toast({
-          title: "Error deleting room",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Room deleted",
-          description: "The study room has been permanently removed.",
-        });
-        fetchRooms();
-      }
-    } catch (error) {
-      console.error('Error deleting room:', error);
-    }
-  };
 
   const handleToggleUserRole = async (userId: string, currentRole: string) => {
     const newRole = currentRole === 'admin' ? 'student' : 'admin';
@@ -334,7 +276,7 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <main className="w-full max-w-[1600px] mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -353,25 +295,13 @@ const AdminDashboard = () => {
               <div className="text-2xl font-bold">{stats.totalPosts}</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Study Rooms</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalRooms}</div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Tabs */}
         <Tabs defaultValue="posts" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
             <TabsTrigger value="posts" className="text-xs sm:text-sm px-2 py-2">
               <span className="hidden sm:inline">Manage </span>Posts
-            </TabsTrigger>
-            <TabsTrigger value="rooms" className="text-xs sm:text-sm px-2 py-2">
-              <span className="hidden sm:inline">Manage </span>Rooms
             </TabsTrigger>
             <TabsTrigger value="groups" className="text-xs sm:text-sm px-2 py-2">
               <span className="hidden sm:inline">Manage </span>Groups
@@ -431,78 +361,6 @@ const AdminDashboard = () => {
               </div>
             )}
           </TabsContent>
-
-          <TabsContent value="rooms" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Study Rooms</h2>
-              <div className="text-sm text-muted-foreground">
-                {rooms.length} total rooms
-              </div>
-            </div>
-            
-            {rooms.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No study rooms yet</h3>
-                <p className="text-muted-foreground">Study rooms will appear here as users create them.</p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {rooms.map((room) => (
-                  <Card key={room.id}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="font-semibold">{room.name}</h3>
-                            <Badge variant={room.is_private ? "secondary" : "default"}>
-                              {room.is_private ? "Private" : "Public"}
-                            </Badge>
-                            <Badge variant="outline">
-                              {room.participant_count}/{room.max_participants} participants
-                            </Badge>
-                          </div>
-                          {room.description && (
-                            <p className="text-sm text-muted-foreground mb-2">{room.description}</p>
-                          )}
-                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                            <span>Created by: {room.profiles?.full_name || room.profiles?.email || 'Unknown'}</span>
-                            <span>Created: {new Date(room.created_at).toLocaleDateString()}</span>
-                            <Badge variant="outline">{room.status}</Badge>
-                          </div>
-                        </div>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Study Room</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{room.name}"? This will remove all participants and cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteRoom(room.id)}
-                                className="bg-destructive hover:bg-destructive/90"
-                              >
-                                Delete Room
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
 
           <TabsContent value="groups" className="space-y-6">
             <GroupManagement posts={posts} onGroupsChange={fetchPosts} />
